@@ -93,6 +93,8 @@ const C = {
 - In plain JS strings, use `\u221A` directly (no curly braces)
 - **NEVER** use `{"\uXXXX"}` inside a JS string literal - this breaks the string
 - **NO bold/strong on variables** in question text. Do not wrap x, y, p, n, etc. in `<strong>` or `<b>`. Variables should be in math font at normal weight, not bold. Bold is only for structural labels like "CORRECT:" or badge text, never for mathematical content.
+- **Consistent styling across ALL questions.** Question text is always fontSize 15.5, lineHeight 2, color C.text. Option cards always use the exact OptionCard pattern from Component Patterns. QuestionSummary always uses fontSize 13 with all options on one row. The header, step nav, step title, and navigation buttons are identical every time — use the App Shell pattern exactly. Do not improvise new styles per question.
+- **ZERO blackspace.** Every card and panel must be filled with content. If a diagram is short, the card should be short — do not pad it to match a taller neighbour. If two panels are side by side and one is shorter, put status cards or additional info in the remaining space. Large empty dark areas inside cards look unprofessional. The anti-pattern is a small number line floating in a tall card with 300px of dead space below it. The good pattern is a graph that fills its card with status cards packed beside or below it.
 
 ---
 
@@ -104,6 +106,7 @@ Every question follows this pattern:
 - Header: "QUESTION [N]"
 - Exact question wording copied from the paper
 - Diagram showing ONLY what is given (no computed values)
+- **Diagrams must match the original question's visual style as closely as possible.** If the question shows two sectors side by side with radius labels, reproduce that exact layout with similar proportions, angles, and label positions. If the question shows a triangle with side lengths and an angle, draw that triangle with the same orientation. The Read step diagram IS the question — it should look like the student is reading the actual exam paper in dark mode.
 - For unknown values (e.g. k), show as general/schematic (dashed outlines, "k" labels, arrows indicating freedom)
 - Do NOT show computed values like "120", "PQ = 6\u221A3" here
 
@@ -247,9 +250,15 @@ function SumNotation({ lower, upper, size }) {
 
 31. **No elements outside bounds** - Interactive elements (draggable points, sliders, markers, dots) must NEVER visually escape their containing SVG or diagram. Clamp all positions to stay within the plot area. For number lines, the indicator dot must stay within the line endpoints. For circle/geometry diagrams, labels and points must stay within the viewBox. Test boundary values mentally: what happens at the min and max of every slider? If an element would go off-screen, clamp it.
 
-32. **Dense, balanced layouts with no dead space** - Every card and panel in the Verify step should be packed efficiently. No large empty areas inside cards. If a diagram is shorter than its neighbour (e.g. a number line next to a tall circle diagram), fill the remaining vertical space with status cards, value displays, or controls rather than leaving it blank. Think of it as a newspaper layout: every region has content. Specific patterns that work well: tall diagram on the left, shorter diagram + status cards stacked on the right, all the same total height; or a single diagram spanning full width with a row of status cards immediately below. Status cards should be grouped into the layout, not dumped in a separate row at the bottom. Padding should be consistent (12-16px gaps) but not excessive. The overall feel should be a polished, dense dashboard where every pixel earns its place.
+32. **Dense, balanced layouts with no dead space** - Every card and panel must be packed efficiently. No large empty dark areas anywhere. Cards should shrink-wrap their content, not stretch to fill arbitrary heights.
 
-33. **Verify layout is flexible, not templated** - The Verify step does NOT have to follow one fixed layout, but MUST fit in one viewport (principle 11). Choose the arrangement that best serves the content at a readable-but-compact size. All content fills the same container width (~820px). Good patterns: side-by-side diagrams (each ~380px wide) with controls below; one diagram with controls beside it; two compact diagrams stacked with minimal gap. Bad patterns: two full-height diagrams stacked (too tall); tiny side-by-side panels (too small); oversized single diagram pushing controls off-screen. The Verify Design Principles table specifies WHAT to build, not HOW to lay it out.
+GOOD example (Q4 sectors verify): Two sector diagrams side by side, each filling its card. Status cards (area diff, small perim, large perim, perim diff) in a tight 4-column row below. Slider and presets above. Everything fills its space, no dead zones.
+
+GOOD example (Q3 integral verify): Graph with shaded area on the left filling its panel. Status cards (f(0), f(1), integral value) stacked on the right, matching the graph height. Dense, balanced, professional.
+
+BAD example: A small number line (100px tall) inside a card that's 400px tall because it's side-by-side with a tall circle diagram. The 300px of empty dark space below the number line looks terrible. Fix: either make the number line card shorter (don't force equal heights), or fill the space below the number line with status cards.
+
+33. **Verify layout is flexible, not templated** - The Verify step does NOT have to follow one fixed layout, but MUST fit in one viewport (principle 11). Choose the arrangement that best serves the content at a readable-but-compact size. All content fills the same container width (~820px). Good patterns: side-by-side diagrams (each ~380px wide) with controls below; one diagram with controls/status cards beside it filling the same height; two compact diagrams stacked with minimal gap. Bad patterns: two panels forced to equal height with one mostly empty; tiny side-by-side panels; oversized single diagram pushing controls off-screen. The Verify Design Principles table specifies WHAT to build, not HOW to lay it out.
 
 ---
 
