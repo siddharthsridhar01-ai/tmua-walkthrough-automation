@@ -206,7 +206,7 @@ const buildSegments = (evalFn) => {
 
 19. **Dynamic y-range for function graphs** - When the curve amplitude depends on a parameter (e.g. p^2 sin x), the y-range MUST adapt. Compute the actual amplitude from the parameter and add 15% padding. Never use a fixed y-range like [-0.5, 0.5] when the curve could go outside it.
 
-20. **Tight thresholds for highlights** - Use 0.01 tolerance for green "correct" highlights and preset button active states. 0.08 or 0.15 causes false positives when sliders are nearby but not at the target value.
+20. **Tight thresholds everywhere — 0.01 tolerance** - Use `Math.abs(value - target) < 0.01` for ALL correctness checks: green highlights, "correct" labels, preset button active states, AND success messages like "Both conditions satisfied" or "Perfect!". A success/verified message should ONLY appear when ALL conditions are met within 0.01 tolerance simultaneously. If the area difference is 21.18 but the target is 21, that is NOT satisfied — do not show a green success banner. False positives are worse than false negatives: the student must learn that "close" is not "correct" in maths.
 
 21. **Adaptive scan ranges for numerical methods** - When counting intersections or finding roots numerically, scale the scan range with the problem parameters. E.g. for a^x = x with a close to 1, intersections can be at x ~ 4/ln(a), which is very large. Use `scanMax = max(20, 4/ln(a) + 5)` with high resolution (4000+ points).
 
