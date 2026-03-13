@@ -215,20 +215,32 @@ interface Question {
 // so it's safe to define everything upfront.
 
 const questions: Question[] = [
-  // ── 2022 Paper 1 (remaining) ──
-  { year: 2022, paper: 1, qNum: 1,  id: "tmua_2022_p1_q1",  answer: "?", topicTag: "TBD", screenshotFile: "tmua_2022_p1_q1.png" },
-  { year: 2022, paper: 1, qNum: 2,  id: "tmua_2022_p1_q2",  answer: "?", topicTag: "TBD", screenshotFile: "tmua_2022_p1_q2.png" },
-  { year: 2022, paper: 1, qNum: 3,  id: "tmua_2022_p1_q3",  answer: "?", topicTag: "TBD", screenshotFile: "tmua_2022_p1_q3.png" },
-  { year: 2022, paper: 1, qNum: 4,  id: "tmua_2022_p1_q4",  answer: "?", topicTag: "TBD", screenshotFile: "tmua_2022_p1_q4.png" },
-  { year: 2022, paper: 1, qNum: 5,  id: "tmua_2022_p1_q5",  answer: "?", topicTag: "TBD", screenshotFile: "tmua_2022_p1_q5.png" },
-  { year: 2022, paper: 1, qNum: 7,  id: "tmua_2022_p1_q7",  answer: "?", topicTag: "TBD", screenshotFile: "tmua_2022_p1_q7.png" },
-  { year: 2022, paper: 1, qNum: 9,  id: "tmua_2022_p1_q9",  answer: "?", topicTag: "TBD", screenshotFile: "tmua_2022_p1_q9.png" },
+  // ── 2022 Paper 1 (all 20) ──
+  { year: 2022, paper: 1, qNum: 1,  id: "tmua_2022_p1_q1",  answer: "C", topicTag: "Trigonometric Equations",       screenshotFile: "tmua_2022_p1_q1.png" },
+  { year: 2022, paper: 1, qNum: 2,  id: "tmua_2022_p1_q2",  answer: "D", topicTag: "Circle Equations",              screenshotFile: "tmua_2022_p1_q2.png" },
+  { year: 2022, paper: 1, qNum: 3,  id: "tmua_2022_p1_q3",  answer: "F", topicTag: "Integration & Functions",       screenshotFile: "tmua_2022_p1_q3.png" },
+  { year: 2022, paper: 1, qNum: 4,  id: "tmua_2022_p1_q4",  answer: "C", topicTag: "Circle Sectors",                screenshotFile: "tmua_2022_p1_q4.png" },
+  { year: 2022, paper: 1, qNum: 5,  id: "tmua_2022_p1_q5",  answer: "H", topicTag: "Sequences",                     screenshotFile: "tmua_2022_p1_q5.png" },
+  { year: 2022, paper: 1, qNum: 6,  id: "tmua_2022_p1_q6",  answer: "F", topicTag: "Integration & Logarithms",      screenshotFile: "tmua_2022_p1_q6.png" },
+  { year: 2022, paper: 1, qNum: 7,  id: "tmua_2022_p1_q7",  answer: "E", topicTag: "Integration & Modulus",         screenshotFile: "tmua_2022_p1_q7.png" },
+  { year: 2022, paper: 1, qNum: 8,  id: "tmua_2022_p1_q8",  answer: "B", topicTag: "Geometric Series",              screenshotFile: "tmua_2022_p1_q8.png" },
+  { year: 2022, paper: 1, qNum: 9,  id: "tmua_2022_p1_q9",  answer: "E", topicTag: "Simultaneous Equations & Trig", screenshotFile: "tmua_2022_p1_q9.png" },
+  { year: 2022, paper: 1, qNum: 10, id: "tmua_2022_p1_q10", answer: "C", topicTag: "Graph Transformations",         screenshotFile: "tmua_2022_p1_q10.png" },
+  { year: 2022, paper: 1, qNum: 11, id: "tmua_2022_p1_q11", answer: "A", topicTag: "Logarithms & Series",           screenshotFile: "tmua_2022_p1_q11.png" },
+  { year: 2022, paper: 1, qNum: 12, id: "tmua_2022_p1_q12", answer: "D", topicTag: "Quadratics & Optimisation",     screenshotFile: "tmua_2022_p1_q12.png" },
+  { year: 2022, paper: 1, qNum: 13, id: "tmua_2022_p1_q13", answer: "A", topicTag: "Surds & Algebra",               screenshotFile: "tmua_2022_p1_q13.png" },
+  { year: 2022, paper: 1, qNum: 14, id: "tmua_2022_p1_q14", answer: "D", topicTag: "Circle Geometry",               screenshotFile: "tmua_2022_p1_q14.png" },
+  { year: 2022, paper: 1, qNum: 15, id: "tmua_2022_p1_q15", answer: "H", topicTag: "Quadratics & Optimisation",     screenshotFile: "tmua_2022_p1_q15.png" },
+  { year: 2022, paper: 1, qNum: 16, id: "tmua_2022_p1_q16", answer: "B", topicTag: "Trigonometry & Algebra",        screenshotFile: "tmua_2022_p1_q16.png" },
+  { year: 2022, paper: 1, qNum: 17, id: "tmua_2022_p1_q17", answer: "D", topicTag: "Triangle Geometry",             screenshotFile: "tmua_2022_p1_q17.png" },
+  { year: 2022, paper: 1, qNum: 18, id: "tmua_2022_p1_q18", answer: "B", topicTag: "Functions & Graphs",            screenshotFile: "tmua_2022_p1_q18.png" },
+  { year: 2022, paper: 1, qNum: 19, id: "tmua_2022_p1_q19", answer: "F", topicTag: "Circles & Probability",         screenshotFile: "tmua_2022_p1_q19.png" },
+  { year: 2022, paper: 1, qNum: 20, id: "tmua_2022_p1_q20", answer: "B", topicTag: "Modulus & Intersections",       screenshotFile: "tmua_2022_p1_q20.png" },
 
   // ── 2022 Paper 2 (remaining) ──
   { year: 2022, paper: 2, qNum: 1,  id: "tmua_2022_p2_q1",  answer: "?", topicTag: "TBD", screenshotFile: "tmua_2022_p2_q1.png" },
   { year: 2022, paper: 2, qNum: 3,  id: "tmua_2022_p2_q3",  answer: "?", topicTag: "TBD", screenshotFile: "tmua_2022_p2_q3.png" },
   { year: 2022, paper: 2, qNum: 4,  id: "tmua_2022_p2_q4",  answer: "?", topicTag: "TBD", screenshotFile: "tmua_2022_p2_q4.png" },
-  { year: 2022, paper: 2, qNum: 5,  id: "tmua_2022_p2_q5_v2", answer: "?", topicTag: "TBD", screenshotFile: "tmua_2022_p2_q5.png" },
   { year: 2022, paper: 2, qNum: 6,  id: "tmua_2022_p2_q6",  answer: "?", topicTag: "TBD", screenshotFile: "tmua_2022_p2_q6.png" },
   { year: 2022, paper: 2, qNum: 7,  id: "tmua_2022_p2_q7",  answer: "?", topicTag: "TBD", screenshotFile: "tmua_2022_p2_q7.png" },
   { year: 2022, paper: 2, qNum: 10, id: "tmua_2022_p2_q10", answer: "?", topicTag: "TBD", screenshotFile: "tmua_2022_p2_q10.png" },
@@ -307,12 +319,23 @@ Output ONLY the React code.`;
   ];
 
   try {
-    const response = await client.messages.create({
+    // Use streaming to avoid 10-minute timeout on long Opus generations
+    const stream = client.messages.stream({
       model: "claude-opus-4-6",
       max_tokens: 32000,
       system: buildSystemPrompt(handover),
       messages: [{ role: "user", content: userContent }],
     });
+
+    // Show progress dots while streaming
+    let dotCount = 0;
+    stream.on("text", () => {
+      dotCount++;
+      if (dotCount % 200 === 0) process.stdout.write(".");
+    });
+
+    const response = await stream.finalMessage();
+    if (dotCount > 0) process.stdout.write("\n");
 
     const text = response.content
       .filter((b): b is Anthropic.TextBlock => b.type === "text")

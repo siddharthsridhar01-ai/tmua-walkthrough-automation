@@ -240,6 +240,8 @@ function SumNotation({ lower, upper, size }) {
 }
 ```
 
+29. **Minimum readable sizes for compact diagrams** - Compact diagrams in the solve split-pane must still be readable. Minimum plot area: pW >= 260, pH >= 160. Minimum SVG font size: 9px (never below 8px). Minimum axis label font: 8px. If a diagram cannot be made readable at compact size, use full-width layout instead of split-pane for that step. The split-pane is a nice-to-have, not mandatory. A full-width diagram with clear labels is always better than a tiny unreadable side panel.
+
 ---
 
 ## Component Patterns
