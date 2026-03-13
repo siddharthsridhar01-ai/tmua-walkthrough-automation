@@ -109,6 +109,17 @@ Every question follows this pattern:
 - **Diagrams must match the original question EXACTLY.** Match orientation (if sectors point up-right in the paper, they point up-right in the walkthrough, not inverted), match relative sizes, match label positions, match layout (side-by-side, stacked, etc.). Study the screenshot carefully: which direction do shapes face? Where are labels placed? What proportions are used? Reproduce all of this. The Read step diagram IS the question — it should look like the student is reading the actual exam paper in dark mode.
 - For unknown values (e.g. k), show as general/schematic (dashed outlines, "k" labels, arrows indicating freedom)
 - Do NOT show computed values like "120", "PQ = 6\u221A3" here
+- **Options display (MUST be identical across all questions):** After the question card, show options in a consistent grid. Use this exact pattern:
+```jsx
+<div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
+  {[{l:"A",v:"..."},{l:"B",v:"..."}, /* all options */].map(o => (
+    <div key={o.l} style={{ flex: "1 1 100px", minWidth: 90, background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, padding: "10px 14px", textAlign: "center", fontSize: 14, color: C.text }}>
+      <span style={{ fontWeight: 700, color: C.accent, marginRight: 8 }}>{o.l}</span>{o.v}
+    </div>
+  ))}
+</div>
+```
+This gives uniform boxes that wrap naturally for 6, 7, or 8 options. Font size 14, accent-coloured letter, consistent padding. Do NOT vary this between questions.
 
 ### Step 1: Setup
 - **Question refresher** at top
