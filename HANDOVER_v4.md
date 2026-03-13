@@ -242,6 +242,8 @@ function SumNotation({ lower, upper, size }) {
 
 29. **Minimum readable sizes for compact diagrams** - Compact diagrams in the solve split-pane must still be readable. Minimum plot area: pW >= 260, pH >= 160. Minimum SVG font size: 9px (never below 8px). Minimum axis label font: 8px. If a diagram cannot be made readable at compact size, use full-width layout instead of split-pane for that step. The split-pane is a nice-to-have, not mandatory. A full-width diagram with clear labels is always better than a tiny unreadable side panel.
 
+30. **Multiple complementary diagrams** - When a question involves a substitution or transformation (e.g. letting u = cos^2 theta to reduce to a quadratic), show BOTH perspectives: the original equation's graph AND the substituted variable's graph. In the Verify step, link them interactively: as the student drags theta, highlight the corresponding u value on the quadratic parabola and the f(theta) value on the original curve. This makes the connection between the substitution and the original equation visible. More generally, if there are two natural ways to visualise a problem (e.g. number line and algebraic, or geometric and coordinate), show both rather than picking one.
+
 ---
 
 ## Component Patterns
