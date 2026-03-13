@@ -16,48 +16,226 @@ const client = new Anthropic({ apiKey: API_KEY });
 // ============================================================
 const OUTPUT_DIR = path.join(process.cwd(), "generated-walkthroughs-tmua");
 const SCREENSHOT_DIR = path.join(process.cwd(), "question-screenshots");
-const HANDOVER_FILE = path.join(process.cwd(), "HANDOVER_v4.md");
+const REFERENCE_DIR = path.join(process.cwd(), "reference-code-tmua");
 
 function loadScreenshot(filename: string): string | null {
   const fp = path.join(SCREENSHOT_DIR, filename);
   if (fs.existsSync(fp)) {
-    const buffer = fs.readFileSync(fp);
-    return buffer.toString("base64");
+    return fs.readFileSync(fp).toString("base64");
   }
   console.warn(`  Warning: screenshot ${filename} not found`);
   return null;
 }
 
-function loadHandover(): string {
-  if (fs.existsSync(HANDOVER_FILE)) return fs.readFileSync(HANDOVER_FILE, "utf-8");
-  console.warn("  Warning: HANDOVER_v4.md not found. Quality will be lower.");
-  return "";
+// ============================================================
+// REFERENCE FILE SELECTION
+// ============================================================
+const TOPIC_TO_REFERENCE: Record<string, string[]> = {
+  "Trigonometric Equations": ["tmua_2022_p2_q18.jsx", "tmua_2022_p1_q15.jsx"],
+  "Integration & Logarithms": ["tmua_2022_p1_q6.jsx", "tmua_2023_p2_q17.jsx"],
+  "Integration & Modulus": ["tmua_2023_p2_q20.jsx"],
+  "Geometric Series": ["tmua_2023_p2_q17.jsx", "tmua_2022_p1_q11.jsx"],
+  "Sequences": ["tmua_2022_p1_q11.jsx", "tmua_2023_p2_q17.jsx"],
+  "Integration & Functions": ["tmua_2022_p1_q6.jsx"],
+  "Graph Transformations": ["tmua_2022_p1_q10.jsx", "tmua_2022_p2_q18.jsx"],
+  "Quadratics & Optimisation": ["tmua_2022_p1_q12.jsx", "tmua_2022_p1_q15.jsx"],
+  "Functions & Graphs": ["tmua_2022_p2_q18.jsx"],
+  "Modulus & Intersections": ["tmua_2022_p2_q14.jsx"],
+  "Circle Sectors": ["tmua_2022_p1_q19.jsx"],
+  "Circle Geometry": ["tmua_2022_p1_q13.jsx", "tmua_2022_p1_q14.jsx"],
+  "Triangle Geometry": ["tmua_2022_p1_q17.jsx", "tmua_2023_p2_q8.jsx"],
+  "Coordinate Geometry": ["tmua_2022_p1_q16.jsx"],
+  "Circles & Probability": ["tmua_2022_p1_q19.jsx"],
+  "Logarithms & Series": ["tmua_2022_p1_q11.jsx"],
+  "Surds & Algebra": ["tmua_2022_p1_q13.jsx"],
+  "Trigonometry & Algebra": ["tmua_2022_p2_q18.jsx"],
+  "Simultaneous Equations & Trig": ["tmua_2022_p2_q18.jsx"],
+  "Completing the Square & Inequalities": ["tmua_2022_p1_q12.jsx"],
+  "_default": ["tmua_2022_p2_q17.jsx"],
+};
+
+function loadBestReference(topicTag: string): string | null {
+  const candidates = TOPIC_TO_REFERENCE[topicTag] || TOPIC_TO_REFERENCE["_default"];
+  for (const filename of candidates) {
+    const fp = path.join(REFERENCE_DIR, filename);
+    if (fs.existsSync(fp)) {
+      console.log(`  Reference: ${filename} (${(fs.readFileSync(fp).length / 1024).toFixed(0)}KB)`);
+      return fs.readFileSync(fp, "utf-8");
+    }
+  }
+  console.warn(`  No reference file found for topic "${topicTag}"`);
+  return null;
 }
 
 // ============================================================
 // SYSTEM PROMPT
+// Built from the route.ts prompt (which produces excellent visuals)
+// adapted for 5-step walkthrough structure + AceAdmissions aesthetic
 // ============================================================
-function buildSystemPrompt(handover: string): string {
-  return `You are building an interactive walkthrough component for AceAdmissions (tmua.co.uk). Each walkthrough guides a student step-by-step through a TMUA question.
+const SYSTEM_PROMPT = `You are the TMUA Interactive Walkthrough Generator for AceAdmissions (tmua.co.uk) - a premium admissions test tutoring product.
 
-You will receive:
-1. A SCREENSHOT of the actual question from the exam paper. This is the ground truth.
-2. A HANDOVER DOCUMENT: the complete design system, pedagogy principles, component patterns (with code), and rules built up over multiple sessions. This is the authoritative specification. Follow every rule in it. Use the exact code patterns provided.
+A screenshot of a TMUA question will be provided. Your job is to analyse the question, determine the best visual format for each step, and produce a single interactive React component that guides a student through the solution in 5 steps.
 
-=== HANDOVER DOCUMENT ===
-${handover}
-=== END HANDOVER DOCUMENT ===
-
-=== OUTPUT FORMAT ===
+CRITICAL INSTRUCTIONS:
 - Respond with ONLY a single React component. No explanation text before or after. No markdown fences.
 - Use "export default function App()" syntax.
 - Only import { useState, useEffect } from "react" at the top. No other imports.
-- Inline styles only. No Tailwind. Fully self-contained, no required props.
-- The component must be a complete 5-step walkthrough (Read, Setup, Solve, Verify, Answer) matching the structure, colour scheme (C object), fonts, and component patterns described in the handover document and demonstrated in the reference code.
-- Read all question text, mathematical expressions, diagrams, and answer options directly from the screenshot. Reproduce question wording exactly.
+- Use inline styles only (no Tailwind). Fully self-contained, no required props.
+- All SVG rendering must be done manually.
+
+DESIGN SYSTEM:
+\`\`\`js
+const C = {
+  bg: "#0f1117", card: "#1a1d27", border: "#2a2d3a",
+  accent: "#6c5ce7", accentLight: "#a29bfe",
+  concl: "#55efc4", conclBg: "rgba(85,239,196,0.10)",
+  ok: "#55efc4", fail: "#ff7675", failBg: "rgba(255,118,117,0.10)",
+  assum: "#fdcb6e", assumBg: "rgba(253,203,110,0.12)",
+  text: "#e2e2e8", muted: "#8b8d9a", white: "#fff",
+  ps: "#74b9ff", psBg: "rgba(116,185,255,0.10)",
+  calc: "#fdcb6e",
+};
+const mathFont = "'Cambria Math','Latin Modern Math','STIX Two Math',Georgia,serif";
+\`\`\`
+Add question-specific colours as needed (curve1, curve2, sp, root, etc.).
+
+- Body font: "'Gill Sans','Trebuchet MS',Calibri,sans-serif"
+- Math: mathFont
+- Title: Palatino Linotype italic
+- NEVER use emojis anywhere
+- NEVER use em dashes (use hyphens, colons, or restructure)
+- NEVER bold mathematical variables (x, y, p, n). Bold is for structural labels only ("CORRECT:", badge text)
+- Use <sub>/<sup> for subscripts/superscripts, never underscores in displayed text
+- Unicode in JSX: use {"\u221A"} syntax. In plain JS strings: \u221A directly
+
+CRITICAL LAYOUT RULES:
+- Screen-shared by tutors. Design for readability at screen-share resolution
+- Within each step, prefer side-by-side panels (graph left, controls/analysis right) over vertical stacking
+- The Verify step MUST fit in a single viewport (~900px height). Slider, graph, status panels, and hint all visible without scrolling. Think dashboard, not document
+- Use CSS grid or flexbox. Default: 60/40 or 70/30 split between visual and controls
+- Max container width: 820px, centred
+
+5-STEP WALKTHROUGH STRUCTURE:
+
+Step 0 - READ:
+- TMUA badge + Paper/Topic header
+- "Interactive Walkthrough" title in Palatino italic
+- Exact question wording reproduced from the screenshot
+- IF the question involves a graph, curve, or geometry: build a FULL-WIDTH SVG reproduction (not a placeholder). This is the first thing the tutor shows - it must look professional
+- For unknown parameters: dashed outlines, symbolic labels ("k" not concrete values)
+- Answer options A-H displayed at bottom
+- Do NOT show computed values or the answer
+
+Step 1 - SETUP:
+- QuestionSummary bar at top (question text condensed, ask highlighted in amber, all options shown small)
+- Identify the problem type and strategy
+- STRATEGY callout box (with C.ps border)
+- IF the question has a parameter or visual concept: include an INTERACTIVE exploration here. A slider, a toggleable diagram, something the student can play with before seeing the solution. This is what separates a great walkthrough from a mediocre one
+- Do NOT compute anything - just outline the approach
+
+Step 2 - SOLVE (Progressive Reveal):
+- QuestionSummary bar at top
+- Steps revealed one at a time with "Reveal next step" button (gradient: C.accent to C.accentLight)
+- Each step: numbered circle (30px, 2px border in step colour) + label + brief signpost text + math box
+- Math boxes: background #1e2030, border C.border, math font, centre-aligned. Maths only, no English
+- CRITICAL: each step that involves a graphical insight gets its OWN inline SVG diagram in a split-pane layout (text+math left, compact diagram right). Diagrams progressively annotate as steps reveal. Do NOT use a single persistent side panel
+- Final step: green conclusion box (C.conclBg, C.ok border)
+- Connector lines between steps: 2px wide, C.border colour, 12px tall
+
+Step 3 - VERIFY:
+- QuestionSummary bar at top
+- TRY IT callout box explaining what to explore
+- THIS IS THE CENTREPIECE. Build the best possible interactive visual for this question:
+  * Interactive sliders with live-updating graphs
+  * Pulsing dots at key points (intersections, critical values)
+  * Preset buttons for important parameter values
+  * Status panels with coloured borders (green=correct, red=incorrect, yellow=boundary)
+  * Number lines synced with sliders
+  * Side-by-side panels where appropriate (geometry + probability space, original + substituted)
+- Dense dashboard layout: every pixel earns its place, no dead space
+- HINT box at bottom (C.assum border, "HINT" badge)
+- Must fit in ~900px viewport height
+
+Step 4 - ANSWER:
+- QuestionSummary bar at top
+- Question restated in italic quote box
+- Summary grid (verdict cards for key values/steps)
+- "Click each option" prompt
+- Option cards A-H with expand/reveal:
+  * Unexpanded: C.card background, C.accent letter badge
+  * Correct expanded: C.conclBg background, C.ok left border, "CORRECT:" prefix
+  * Incorrect expanded: C.failBg background, C.fail left border, "INCORRECT:" prefix
+  * Staggered animation on step entry (100ms per card)
+
+NAVIGATION:
+- 5 step buttons at top (Read/Setup/Solve/Verify/Answer), active=C.accent, completed=accent at 15%, future=#1e2030
+- Previous button (left, outline style, disabled at step 0)
+- Next button (right, gradient C.accent->C.accentLight). On final step: "Complete" button with C.ok gradient
+
+FORMAT DECISION - choose visual type per question:
+- Graph/intersection → Interactive graph with sliders and pulsing dots at intersections
+- Trigonometric equations → Plot f(theta) + substitution parabola, dual-linked sliders
+- Geometric (circles, triangles, sectors) → Accurate SVG geometry, progressive annotation, draggable points in verify
+- Geometric probability → Dual panel (geometry + probability space with draggable point)
+- Optimisation / parameter → Graph with parameter slider + live max/min/difference display + number line
+- Sequences / series → Step function or running total chart with slider for number of terms
+- Graph transformations → Overlay with coefficient comparison, toggle transforms
+- Logic / must-be-true (Paper 2) → Arrow-notation logic checker: [A tick/cross] -> [B tick/cross], green/red/grey arrows
+- Proof analysis / find error → Student proof with step checker + interactive function explorer
+- Counterexample → Fix one variable, drag another to find it
+- Graph matching → Toggle individual functions on/off
+- Family of curves → Slider with ghost curves + envelope
+- Absolute value / modulus → Number line with distance arcs, midpoint boundaries, shaded overlap
+- Comparing equations → 2x2 grid of graphs
+- Binomial / coefficient → Interactive pairing table
+
+CRITICAL GRAPH RULES:
+- ALWAYS make viewing windows significantly WIDER than needed. If solutions in [-3, 6], show [-5, 8]. Missing an intersection off-screen is a catastrophic error
+- Before choosing axis ranges, analytically determine ALL solutions first, then set window to contain all with margin
+- Scan range for finding intersections must EXCEED display range. Use 4000+ sample points
+- Labels, counts, status text MUST come from actual computed intersections, NOT a separate formula. If graph shows 2 intersections, label says 2
+- If analytical reasoning disagrees with graph computation, trust the graph and fix reasoning
+- For solution-counting with slider: compute intersections numerically for current value, count live. Never hardcode rules
+- Pulsing dots at key points: <circle cx={x} cy={y} r={5} fill={color}><animate attributeName="r" values="4;7;4" dur="1.5s" repeatCount="indefinite" /></circle>
+- Synced number lines: indicator dot MUST move with slider via same state variable
+- Adaptive scan ranges: for a^x = x with a near 1, use scanMax = max(20, 4/ln(a) + 5)
+
+SVG TECHNICAL RULES:
+- Pixel-margin layout. Fixed margins (mL, mR, mT, mB) accounting for worst-case label widths:
+  const mL=44, mR=24, mT=20, mB=30, pW=400, pH=240;
+  const toSx = (x) => mL + ((x-xMin)/(xMax-xMin))*pW;
+  const toSy = (y) => mT + ((yMax-y)/(yMax-yMin))*pH;
+  Compact (split-pane): pW~220-280, pH~140-180
+- No flatlines: break polyline into segments when curve exits y-range. Never clamp y to yMax/yMin
+- Dynamic y-range: adapt to parameter. Compute amplitude + 15% padding
+- Dashed gridlines at key values. Y-step from [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50]
+- Background rects on all SVG text: fill={C.bg} fillOpacity={0.85}
+- Dynamic text rect widths: textRectW = (str, fs) => str.length * fs * 0.62 + 10
+- No elements outside bounds: clamp all interactive elements within SVG viewBox
+- Graph labels show actual expressions ("y = a^x") not just colour swatches
+- Content-driven viewBox for geometry: compute bounding box from content, add label padding
+- Use 0.01 tolerance for highlight thresholds, not 0.08 or 0.15
+
+PEDAGOGY RULES:
+- AS Level maths only (plus modular arithmetic, sequences/series). No further maths. Perpendicular gradients, not dot products
+- Non-calculator exam. Known values fine (sin pi/6 = 0.5). No decimal approximations. Qualitative reasoning for unknowns
+- Degrees vs radians: match the question, never mix
+- Read/Setup show only given info. No computed values on diagrams
+- Setup identifies approach, doesn't compute
+- Solve models the exam sketch method: progressive diagrams like an idealised version of what students draw on paper
+- Think like a tutor, not a markscheme. Teach optimal thinking
+- Verify mirrors exam technique: if exam approach is "try values", verify lets them try values
+- Formal but accessible. Brief signpost, full working in math box. Named theorems go in "Note" boxes, not main labels
+- Never introduce unexplained values in Solve. Use symbolic labels for algebraic derivations, save concrete numbers for Verify
+- For "which statements are true" questions: always show all statements I, II, III in the QuestionSummary
+- For Paper 2 logic: translate in Setup ("A is sufficient for B" = "if A then B", "A only if B" = "if A then B", "A is necessary for B" = "if B then A")
+- When a question involves a substitution (e.g. t = cos^2 theta), show BOTH perspectives: original and substituted. Link them interactively in Verify
+
+VERIFY YOUR WORK:
+- Before writing code: solve the question yourself, verify answer matches the provided correct answer
+- After writing code mentally: does every step have a visual where one would help? Is the Verify step a polished dashboard or just text? Would a tutor be proud to screen-share this?
 
 Respond with ONLY the React code. Nothing else.`;
-}
 
 // ============================================================
 // QUESTION DEFINITIONS
@@ -69,13 +247,8 @@ interface Question {
   id: string;
   answer: string;
   topicTag: string;
-  screenshotFile: string;   // e.g. "tmua_2023_p2_q6.png"
+  screenshotFile: string;
 }
-
-// Pre-populated with the remaining questions from the handover doc.
-// Add new questions here as you get screenshots.
-// The script will skip any question whose screenshot file is missing,
-// so it's safe to define everything upfront.
 
 const questions: Question[] = [
   // ── 2022 Paper 1 (all 20) ──
@@ -131,8 +304,8 @@ const questions: Question[] = [
 // ============================================================
 // GENERATE ONE WALKTHROUGH
 // ============================================================
-async function generateOne(q: Question, index: number, total: number, handover: string): Promise<void> {
-  console.log(`\n[${ index + 1}/${total}] Generating: ${q.id} (${q.year} P${q.paper} Q${q.qNum}, ${q.topicTag}, answer: ${q.answer})`);
+async function generateOne(q: Question, index: number, total: number): Promise<void> {
+  console.log(`\n[${index + 1}/${total}] Generating: ${q.id} (${q.year} P${q.paper} Q${q.qNum}, ${q.topicTag}, answer: ${q.answer})`);
 
   const screenshot = loadScreenshot(q.screenshotFile);
   if (!screenshot) {
@@ -141,51 +314,48 @@ async function generateOne(q: Question, index: number, total: number, handover: 
   }
   console.log(`  Screenshot: ${q.screenshotFile} loaded (${(screenshot.length * 0.75 / 1024).toFixed(0)}KB)`);
 
-  const textPrompt = `Build an interactive walkthrough for this TMUA question.
+  const referenceCode = loadBestReference(q.topicTag);
 
-The SCREENSHOT above shows the exact question from the TMUA ${q.year} Paper ${q.paper} exam. This is the ground truth for all question text, expressions, diagrams, and answer options.
+  let textPrompt = `Build a 5-step interactive walkthrough for this TMUA question.
 
-QUESTION NUMBER: ${q.qNum}
-PAPER: ${q.paper}
-YEAR: ${q.year}
-TOPIC TAG: ${q.topicTag}
-SOURCE: TMUA ${q.year} Paper ${q.paper}
-VERIFIED CORRECT ANSWER: ${q.answer}
+The SCREENSHOT shows the exact question from TMUA ${q.year} Paper ${q.paper}. Read all text, expressions, diagrams, and options from it.
 
-Solve the question, verify your answer matches ${q.answer}, then build the complete 5-step walkthrough using the exact code patterns from the handover document.
+QUESTION: ${q.qNum}  |  PAPER: ${q.paper}  |  YEAR: ${q.year}  |  TOPIC: ${q.topicTag}  |  CORRECT ANSWER: ${q.answer}
 
-Output ONLY the React code.`;
+Before writing code:
+1. Solve the question yourself and confirm answer = ${q.answer}
+2. Check the FORMAT DECISION list for "${q.topicTag}" to pick the right visual type
+3. Plan what interactive elements each step needs (sliders, graphs, animations)
+4. Then build it`;
+
+  if (referenceCode) {
+    textPrompt += `
+
+=== REFERENCE EXAMPLE (match or exceed this visual quality) ===
+${referenceCode}
+=== END REFERENCE ===`;
+  }
+
+  textPrompt += `\n\nOutput ONLY the React code.`;
 
   const userContent: Anthropic.MessageCreateParams["messages"][0]["content"] = [
     {
       type: "image",
-      source: {
-        type: "base64",
-        media_type: "image/png",
-        data: screenshot,
-      },
+      source: { type: "base64", media_type: "image/png", data: screenshot },
     },
-    {
-      type: "text",
-      text: textPrompt,
-    },
+    { type: "text", text: textPrompt },
   ];
 
   try {
-    // Use streaming to avoid 10-minute timeout on long Opus generations
     const stream = client.messages.stream({
       model: "claude-opus-4-6",
       max_tokens: 32000,
-      system: buildSystemPrompt(handover),
+      system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: userContent }],
     });
 
-    // Show progress dots while streaming
     let dotCount = 0;
-    stream.on("text", () => {
-      dotCount++;
-      if (dotCount % 200 === 0) process.stdout.write(".");
-    });
+    stream.on("text", () => { dotCount++; if (dotCount % 200 === 0) process.stdout.write("."); });
 
     const response = await stream.finalMessage();
     if (dotCount > 0) process.stdout.write("\n");
@@ -196,7 +366,6 @@ Output ONLY the React code.`;
       .join("\n");
 
     let code = text.trim();
-    // Strip any markdown code fences the model might add despite instructions
     code = code.replace(/^```[\w]*\s*\n?/, "");
     code = code.replace(/\n?```\s*$/, "");
     code = code.trim();
@@ -209,55 +378,51 @@ Output ONLY the React code.`;
 
     // Sanity checks
     if (lineCount < 200) console.warn(`  WARNING: Output seems short (${lineCount} lines). May be incomplete.`);
-    if (!code.includes("export default")) console.warn(`  WARNING: Missing "export default". May not render.`);
-    if (!code.includes("Step 0") && !code.includes("Read") && !code.includes("step === 0"))
+    if (lineCount < 350) console.warn(`  NOTE: Under 350 lines - may lack visual richness.`);
+    if (!code.includes("export default")) console.warn(`  WARNING: Missing "export default".`);
+    if (!code.includes("step === 0") && !code.includes("step===0") && !code.includes("Read"))
       console.warn(`  WARNING: May be missing step structure.`);
     if (code.includes("TARA")) console.warn(`  WARNING: Contains "TARA" - should say "TMUA".`);
+    if (!code.includes("<svg") && !code.includes("<circle") && !code.includes("<line"))
+      console.warn(`  WARNING: No SVG elements. May lack visuals.`);
+    if (!code.includes("range"))
+      console.warn(`  NOTE: No range input found. May lack interactivity.`);
 
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error(`  ERROR on ${q.id}: ${msg}`);
-    const errPath = path.join(OUTPUT_DIR, `${q.id}.error.txt`);
-    fs.writeFileSync(errPath, msg, "utf-8");
+    fs.writeFileSync(path.join(OUTPUT_DIR, `${q.id}.error.txt`), msg, "utf-8");
   }
 }
 
 // ============================================================
 // MAIN
-// Usage:
-//   npx tsx generate-walkthroughs-tmua.ts                       -- generate all with screenshots
-//   npx tsx generate-walkthroughs-tmua.ts 2022_p1_q1 2023_p2_q5 -- specific questions
-//   npx tsx generate-walkthroughs-tmua.ts p1q1 p2q5             -- shorthand
 // ============================================================
 async function main() {
-  console.log("=== TMUA Interactive Walkthrough Generator ===");
+  console.log("=== TMUA Walkthrough Generator v2 ===");
   console.log(`Output:       ${OUTPUT_DIR}`);
   console.log(`Screenshots:  ${SCREENSHOT_DIR}`);
-  console.log(`Handover:     ${HANDOVER_FILE}`);
+  console.log(`References:   ${REFERENCE_DIR}`);
 
   if (!fs.existsSync(OUTPUT_DIR)) fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
-  const handover = loadHandover();
-  if (!handover) {
-    console.error("\nERROR: HANDOVER_v4.md is required for quality output.");
-    console.error("  Place it in the project root.");
-    process.exit(1);
-  }
-  console.log(`Handover:     loaded (${(handover.length / 1024).toFixed(0)}KB)`);
-
   if (!fs.existsSync(SCREENSHOT_DIR)) {
     console.error("\nERROR: question-screenshots/ folder not found.");
-    console.error("  Create it and add PNG screenshots named like: tmua_2022_p1_q1.png");
     process.exit(1);
   }
 
-  // Count available screenshots
+  if (fs.existsSync(REFERENCE_DIR)) {
+    const refFiles = fs.readdirSync(REFERENCE_DIR).filter(f => f.endsWith(".jsx"));
+    console.log(`References:   ${refFiles.length} files available`);
+  } else {
+    console.warn("References:   reference-code-tmua/ not found.");
+  }
+
   const availableScreenshots = questions.filter((q) =>
     fs.existsSync(path.join(SCREENSHOT_DIR, q.screenshotFile))
   );
   console.log(`Screenshots:  ${availableScreenshots.length}/${questions.length} available`);
 
-  // Parse CLI args
   const args = process.argv.slice(2);
   let toGenerate: Question[];
 
@@ -265,50 +430,31 @@ async function main() {
     toGenerate = [];
     for (const arg of args) {
       const a = arg.toLowerCase().replace(/^tmua_?/, "");
-      // Try to match against question IDs
       const match = questions.find((q) => {
         const qId = q.id.toLowerCase();
         const shorthand = `p${q.paper}q${q.qNum}`;
         const medium = `${q.year}_p${q.paper}_q${q.qNum}`;
-        return (
-          qId.includes(a) ||
-          a === shorthand ||
-          a === medium ||
-          a === `q${q.qNum}` && args.length === 1 // only if unambiguous
-        );
+        return qId.includes(a) || a === shorthand || a === medium || (a === `q${q.qNum}` && args.length === 1);
       });
-      if (match) {
-        toGenerate.push(match);
-      } else {
-        console.warn(`  No match for arg: "${arg}"`);
-      }
+      if (match) toGenerate.push(match);
+      else console.warn(`  No match for: "${arg}"`);
     }
-
     if (toGenerate.length === 0) {
       console.error(`\nNo matching questions for: ${args.join(", ")}`);
-      console.error(`  Format: 2022_p1_q1, p1q1, or full ID tmua_2022_p1_q1`);
-      console.error(`  Available: ${questions.map((q) => q.id).join(", ")}`);
       process.exit(1);
     }
-    console.log(`\nGenerating ${toGenerate.length} question(s): ${toGenerate.map((q) => q.id).join(", ")}\n`);
+    console.log(`\nGenerating ${toGenerate.length}: ${toGenerate.map(q => q.id).join(", ")}\n`);
   } else {
-    // Generate all that have screenshots
     toGenerate = availableScreenshots;
-    if (toGenerate.length === 0) {
-      console.error("\nNo screenshots found. Add PNGs to question-screenshots/");
-      console.error("  Naming: tmua_2022_p1_q1.png, tmua_2023_p2_q6.png, etc.");
-      process.exit(1);
-    }
-    console.log(`\nGenerating ALL ${toGenerate.length} questions with available screenshots\n`);
+    if (toGenerate.length === 0) { console.error("\nNo screenshots found."); process.exit(1); }
+    console.log(`\nGenerating ALL ${toGenerate.length} with screenshots\n`);
   }
 
   for (let i = 0; i < toGenerate.length; i++) {
-    await generateOne(toGenerate[i], i, toGenerate.length, handover);
-
-    // Rate limit pause between requests
+    await generateOne(toGenerate[i], i, toGenerate.length);
     if (i < toGenerate.length - 1) {
       console.log("  Waiting 5s...");
-      await new Promise((r) => setTimeout(r, 5000));
+      await new Promise(r => setTimeout(r, 5000));
     }
   }
 
