@@ -84,6 +84,7 @@ const C = {
 - **Headings**: Use Palatino Linotype italic for the main "Interactive Walkthrough" title
 
 ### Critical Style Rules
+- **NO bare ∫ or Σ characters ANYWHERE.** These render with broken limit positioning. Always use the `Integral` and `Sigma` components defined in Component Patterns. If you write `∫` or `{"\u222B"}` as a bare character in HTML text, the limits will be mispositioned. This is the single most common rendering bug. Use `<Integral lower="0" upper="1" />` instead. ALWAYS. In Read step, QuestionSummary, Solve math boxes, everywhere.
 - **NO emojis** anywhere
 - **NO em dashes** anywhere, use hyphens or restructure
 - **NO Tailwind** - inline styles only
@@ -515,25 +516,25 @@ For any "if A then B" / "only if" / "sufficient/necessary" statement:
 - Include explanation text below
 
 ### Integral and Summation Notation — MANDATORY
-**NEVER use a bare ∫ or Σ character.** They cannot show limits and look broken. Use these HTML/CSS components instead:
+**NEVER use a bare ∫ or Σ character.** They cannot show limits and look broken. Use these components instead:
 
 ```jsx
 function Integral({ lower, upper }) {
   return (
-    <span style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", verticalAlign: "middle", margin: "0 2px", lineHeight: 1, fontFamily: mathFont }}>
-      <span style={{ fontSize: 9, color: C.muted }}>{upper}</span>
-      <span style={{ fontSize: 28, lineHeight: 0.9, color: C.white }}>{"\u222B"}</span>
-      <span style={{ fontSize: 9, color: C.muted }}>{lower}</span>
+    <span style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", verticalAlign: "middle", margin: "0 4px", lineHeight: 1 }}>
+      <span style={{ fontSize: 13, fontFamily: "serif", color: C.white }}>{upper}</span>
+      <span style={{ fontSize: 30, fontFamily: "serif", color: C.white, transform: "scaleY(0.7)", marginTop: -4, marginBottom: -2 }}>{"\u222B"}</span>
+      <span style={{ fontSize: 13, fontFamily: "serif", color: C.white }}>{lower}</span>
     </span>
   );
 }
 
 function Sigma({ lower, upper }) {
   return (
-    <span style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", verticalAlign: "middle", margin: "0 2px", lineHeight: 1, fontFamily: mathFont }}>
-      <span style={{ fontSize: 9, color: C.muted }}>{upper}</span>
-      <span style={{ fontSize: 24, lineHeight: 0.9, color: C.white }}>{"\u03A3"}</span>
-      <span style={{ fontSize: 9, color: C.muted }}>{lower}</span>
+    <span style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", verticalAlign: "middle", margin: "0 4px", lineHeight: 1 }}>
+      <span style={{ fontSize: 13, fontFamily: "serif", color: C.white }}>{upper}</span>
+      <span style={{ fontSize: 26, fontFamily: "serif", color: C.white, transform: "scaleY(0.8)", marginTop: -3, marginBottom: -1 }}>{"\u03A3"}</span>
+      <span style={{ fontSize: 13, fontFamily: "serif", color: C.white }}>{lower}</span>
     </span>
   );
 }
@@ -542,7 +543,7 @@ Usage everywhere (Read step, QuestionSummary, Solve math boxes):
 ```jsx
 <p>...and <Integral lower="0" upper="1" /> f(x) dx = 1, find...</p>
 ```
-These use pure HTML flexbox (no SVG) so they work reliably inline in any context. Define them at the top of the component file whenever the question involves integrals or sums.
+The key trick is `transform: scaleY(0.7)` which squashes the tall integral glyph to a proportional size, with negative margin to tighten the gaps. Define these at the top of the component file whenever the question involves integrals or sums.
 
 ---
 
