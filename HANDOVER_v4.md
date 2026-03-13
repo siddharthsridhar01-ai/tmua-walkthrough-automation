@@ -92,6 +92,7 @@ const C = {
 - Unicode: always use `{"\u221A"}` JSX syntax, never bare `\u221A` in JSX expressions
 - In plain JS strings, use `\u221A` directly (no curly braces)
 - **NEVER** use `{"\uXXXX"}` inside a JS string literal - this breaks the string
+- **NO bold/strong on variables** in question text. Do not wrap x, y, p, n, etc. in `<strong>` or `<b>`. Variables should be in math font at normal weight, not bold. Bold is only for structural labels like "CORRECT:" or badge text, never for mathematical content.
 
 ---
 
@@ -176,7 +177,7 @@ Every question follows this pattern:
 
 ### Visual & Technical
 
-16. **Pixel-margin layout for SVGs** - NEVER compute SVG viewBox dimensions from geometry alone. Use fixed pixel margins (mL, mR, mT, mB) that account for all annotations. The plot area lives inside these margins. Compute margin sizes by auditing the rightmost/bottommost pixel of every annotation element BEFORE setting the values. Formula: `mR = max_annotation_extent_right + 8px buffer`.
+16. **Pixel-margin layout for SVGs** - NEVER compute SVG viewBox dimensions from geometry alone. Use fixed pixel margins (mL, mR, mT, mB) that account for ALL annotations including dynamic labels that change with slider values. The plot area lives inside these margins. Compute margin sizes by considering the WORST CASE: what is the longest label text at extreme slider values? For number lines, the indicator label "p = -3.5" needs more right margin than "p = 1". Use mR = max_possible_label_width + 12px buffer. If a label would extend beyond the viewBox at any slider position, the margins are wrong.
 
 17. **Dynamic text background rectangles** - Never hardcode `<rect>` widths for text labels. Use a helper: `textRectW = (str, fontSize) => str.length * fontSize * 0.65 + padding`. Every text label in SVG should have a background rect sized by this formula.
 
@@ -252,48 +253,199 @@ function SumNotation({ lower, upper, size }) {
 
 ---
 
-## Component Patterns
+## Component Patterns (with code)
 
-### AlgebraWalkthrough / SolveStep
-- Numbered circles (1, 2, 3...) with colored borders matching step type
-- Each step: label (uppercase), brief explanation text (muted), math box (dark bg, math font, centered)
-- Connector lines between revealed steps
-- "Reveal next step ->" button with gradient
-- Split-pane: text+math on left, compact diagram on right (each step gets its own diagram)
-- Optional conclusion box (green) followed by optional "Note" box (blue) for wider knowledge
-- Math boxes are for maths only - no English sentences inside them
+These are the exact JSX patterns to follow. Do NOT deviate from these structural patterns.
 
-### OptionCard
-- Letter badge (A, B, C...) in accent color
-- Expands on click to show CORRECT/INCORRECT explanation
-- Green/red background + left border when expanded
-- Staggered animation on mount (100ms delay per card)
+### App Shell
+```jsx
+export default function App() {
+  const [step, setStep] = useState(0);
+  const [expanded, setExpanded] = useState(null);
+  const [optAnim, setOptAnim] = useState(opts.map(() => false));
+  useEffect(() => {
+    if (step === 4) { opts.forEach((_, i) => { setTimeout(() => setOptAnim(p => { const n = [...p]; n[i] = true; return n; }), i * 100); }); }
+    else { setOptAnim(opts.map(() => false)); setExpanded(null); }
+  }, [step]);
+  return (
+    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Gill Sans','Trebuchet MS',Calibri,sans-serif", letterSpacing: 0.2, padding: "24px 16px" }}>
+      <div style={{ maxWidth: 820, margin: "0 auto" }}>
+        {/* Header */}
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+            <span style={{ background: `linear-gradient(135deg,${C.accent},${C.accentLight})`, borderRadius: 8, padding: "5px 12px", fontSize: 11, fontWeight: 700, color: C.white, letterSpacing: 1 }}>TMUA</span>
+            <span style={{ fontSize: 12, color: C.muted }}>Paper N</span>
+            <span style={{ fontSize: 12, color: C.muted }}>{"\u00B7"}</span>
+            <span style={{ fontSize: 12, color: C.ps }}>Topic Tag</span>
+          </div>
+          <h1 style={{ fontSize: 24, fontWeight: 700, color: C.white, margin: "0 0 4px", fontFamily: "'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif", fontStyle: "italic", letterSpacing: 0.5 }}>Interactive Walkthrough</h1>
+          <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>TMUA YEAR {"\u00B7"} Paper N {"\u00B7"} Question N</p>
+        </div>
+        {/* Step nav buttons */}
+        <div style={{ display: "flex", gap: 4, marginBottom: 24 }}>
+          {stepsMeta.map(s => (
+            <button key={s.id} onClick={() => setStep(s.id)} style={{
+              flex: 1, minWidth: 0,
+              background: step === s.id ? C.accent : step > s.id ? "rgba(108,92,231,0.15)" : "#1e2030",
+              border: `1px solid ${step === s.id ? C.accent : step > s.id ? C.accent + "44" : C.border}`,
+              borderRadius: 10, padding: "10px 4px", cursor: "pointer", transition: "all 0.3s",
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+            }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: step === s.id ? C.white : step > s.id ? C.accentLight : C.muted }}>{s.id + 1}</span>
+              <span style={{ fontSize: 10, fontWeight: step === s.id ? 700 : 500, color: step === s.id ? C.white : step > s.id ? C.accentLight : C.muted, whiteSpace: "nowrap" }}>{s.label}</span>
+            </button>
+          ))}
+        </div>
+        {/* Step title */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+          <span style={{ background: C.accent, borderRadius: 6, width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: C.white }}>{step + 1}</span>
+          <h2 style={{ fontSize: 17, fontWeight: 700, color: C.white, margin: 0 }}>{stepsMeta[step].title}</h2>
+        </div>
+        {/* Steps 0-4 rendered conditionally here */}
+        {/* Navigation */}
+        <div style={{ display: "flex", gap: 12, paddingBottom: 32 }}>
+          <button onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0} style={{ flex: 1, padding: "13px 20px", borderRadius: 10, border: `1px solid ${C.border}`, background: step === 0 ? C.card : "#1e2030", color: step === 0 ? C.muted : C.text, fontSize: 14, fontWeight: 600, cursor: step === 0 ? "not-allowed" : "pointer", opacity: step === 0 ? 0.4 : 1 }}>{"\u2190"} Previous</button>
+          {step < 4 ? (
+            <button onClick={() => setStep(step + 1)} style={{ flex: 1, padding: "13px 20px", borderRadius: 10, border: "none", background: `linear-gradient(135deg,${C.accent},${C.accentLight})`, color: C.white, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Next {"\u2192"}</button>
+          ) : (
+            <button onClick={() => {}} style={{ flex: 1, padding: "13px 20px", borderRadius: 10, border: "none", background: `linear-gradient(135deg,${C.ok},#2ecc71)`, color: C.white, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>Back to Question Review</button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+```
 
 ### QuestionSummary
-- Centered text on `#1e2030` background
-- Full question with all definitions/expressions
-- **Must show all numbered statements (I, II, III) written out explicitly**
-- Answer options row below
+```jsx
+function QuestionSummary() {
+  return (
+    <div style={{ background: "#1e2030", border: `1px solid ${C.border}`, borderRadius: 10, padding: "12px 18px", marginBottom: 16, textAlign: "center" }}>
+      <p style={{ margin: "0 0 6px", fontSize: 13, color: C.muted, lineHeight: 1.6 }}>
+        <span style={{ fontWeight: 700, color: C.muted, letterSpacing: 0.5, marginRight: 6 }}>QN</span>
+        Question text here. Use mathFont for expressions. Highlight the ask in <strong style={{ color: C.assum }}>amber</strong>.
+      </p>
+      <div style={{ display: "flex", justifyContent: "center", gap: 6, fontSize: 10, fontWeight: 600, color: C.muted, flexWrap: "wrap" }}>
+        <span>A: ...</span><span>B: ...</span>{/* all 8 options A-H */}
+      </div>
+    </div>
+  );
+}
+```
 
-### Navigation
-- 5 step buttons across top (numbered, with labels)
-- Previous/Next buttons at bottom
-- "Complete" button on final step (green gradient)
+### SolveStep (progressive reveal)
+```jsx
+function SolveStep() {
+  const [revealed, setRevealed] = useState(0);
+  const steps = [
+    { label: "STEP NAME", text: "Brief signpost.", math: (<div>...</div>), color: C.ps, graph: "graphType" },
+    // ... more steps. Final step uses color: C.concl
+  ];
+  return (
+    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "22px 24px", marginBottom: 18 }}>
+      {steps.map((s, i) => {
+        if (i > revealed) return null;
+        return (
+          <div key={i} style={{ marginBottom: 22 }}>
+            <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+              {/* Numbered circle */}
+              <div style={{ width: 30, height: 30, borderRadius: "50%", flexShrink: 0, background: s.color + "22", border: `2px solid ${s.color}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: s.color }}>{i + 1}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: s.color, marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>{s.label}</div>
+                <p style={{ margin: "0 0 6px", fontSize: 13, color: C.muted, lineHeight: 1.6 }}>{s.text}</p>
+                {/* Math box + optional diagram side by side */}
+                <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                  <div style={{ flex: "1 1 240px", background: "#1e2030", border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 14px", fontSize: 15, color: C.white, fontFamily: mathFont, textAlign: "center", lineHeight: 2 }}>{s.math}</div>
+                  {s.graph && <div style={{ flex: "0 0 280px" }}>{/* compact diagram */}</div>}
+                </div>
+                {/* Green conclusion on final step */}
+                {i === steps.length - 1 && (
+                  <div style={{ marginTop: 10, padding: "10px 14px", borderRadius: 8, background: C.conclBg, border: `1px solid ${C.ok}44`, fontSize: 13.5, color: C.ok, fontWeight: 600 }}>Answer text here.</div>
+                )}
+              </div>
+            </div>
+            {i < revealed && i < steps.length - 1 && <div style={{ marginLeft: 14, width: 2, height: 12, background: C.border }} />}
+          </div>
+        );
+      })}
+      {revealed < steps.length - 1 && (
+        <button onClick={() => setRevealed(p => p + 1)} style={{ marginTop: 4, padding: "11px 22px", borderRadius: 10, border: "none", background: `linear-gradient(135deg,${C.accent},${C.accentLight})`, color: C.white, fontSize: 13, fontWeight: 600, cursor: "pointer", marginLeft: 42 }}>Reveal next step {"\u2192"}</button>
+      )}
+    </div>
+  );
+}
+```
 
-### Diagram Components (general pattern)
-```js
-function MyDiagram({ ..., general, compact }) {
-  // Pixel margins - compute from annotation extent + buffer
-  const mL = compact ? X : Y, mR = compact ? X : Y;
-  const mT = compact ? X : Y, mB = compact ? X : Y;
-  const plotSize = compact ? X : Y;
-  const w = mL + plotW + mR, h = mT + plotH + mB;
+### Verify Layout (dashboard pattern)
+The verify step must fit in one viewport (~900px). Arrange as a dense dashboard:
+```jsx
+{/* Controls card: slider + preset buttons */}
+<div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 20px", marginBottom: 14 }}>
+  <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 10 }}>
+    <input type="range" ... style={{ flex: 1, accentColor: C.accent, height: 6 }} />
+    <span style={{ minWidth: 80, fontSize: 16, fontWeight: 700, color: C.curve1, fontFamily: mathFont }}>label = value</span>
+  </div>
+  <div style={{ display: "flex", gap: 6 }}>
+    {/* Preset buttons */}
+    <button style={{ flex: 1, padding: "8px 4px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.card, color: C.muted, fontSize: 11, cursor: "pointer" }}>preset</button>
+  </div>
+</div>
 
-  // Dynamic text sizing
-  const textRectW = (str, fs) => str.length * fs * 0.65 + (compact ? 6 : 10);
+{/* Main diagram - full width */}
+<div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px 16px", marginBottom: 14 }}>
+  <MyDiagram compact={false} />
+</div>
 
-  // general mode: schematic, symbolic labels (x, y, z not 2, 4, 1)
-  // compact mode: for split-pane in solve step
+{/* Status cards row */}
+<div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 14 }}>
+  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 14px", textAlign: "center" }}>
+    <div style={{ fontSize: 10, color: C.muted, fontWeight: 700, marginBottom: 4, textTransform: "uppercase" }}>Label</div>
+    <div style={{ fontSize: 20, fontWeight: 700, color: C.white, fontFamily: mathFont }}>value</div>
+  </div>
+  {/* more status cards */}
+</div>
+
+{/* HINT box */}
+<div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "12px 18px" }}>
+  <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+    <span style={{ background: C.assumBg, border: `1px solid ${C.assum}`, borderRadius: 6, padding: "4px 10px", fontSize: 12, color: C.assum, fontWeight: 700, whiteSpace: "nowrap" }}>HINT</span>
+    <p style={{ color: C.muted, fontSize: 13, lineHeight: 1.6, margin: 0 }}>Hint text.</p>
+  </div>
+</div>
+```
+
+### OptionCard
+```jsx
+function OptionCard({ o, expanded, animate, onClick }) {
+  return (
+    <div onClick={onClick} style={{
+      background: expanded ? (o.ok ? C.conclBg : C.failBg) : C.card,
+      border: `1px solid ${expanded ? (o.ok ? C.ok : C.fail) + "55" : C.border}`,
+      borderLeft: expanded ? `4px solid ${o.ok ? C.ok : C.fail}` : `1px solid ${C.border}`,
+      borderRadius: 10, padding: "12px 16px", cursor: "pointer",
+      transition: "all 0.3s", opacity: animate ? 1 : 0, transform: animate ? "translateY(0)" : "translateY(12px)",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ width: 30, height: 30, borderRadius: 8,
+          background: expanded ? (o.ok ? C.ok + "22" : C.fail + "22") : C.accent + "22",
+          border: `1.5px solid ${expanded ? (o.ok ? C.ok : C.fail) : C.accent}`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 14, fontWeight: 700, color: expanded ? (o.ok ? C.ok : C.fail) : C.accent, flexShrink: 0
+        }}>{o.letter}</div>
+        <div style={{ flex: 1 }}>
+          <p style={{ margin: 0, fontSize: 14, color: C.text }}>{o.text}</p>
+          {expanded && (
+            <div style={{ marginTop: 10, padding: "10px 14px", borderRadius: 8, fontSize: 13, lineHeight: 1.6,
+              background: o.ok ? C.conclBg : C.failBg, color: o.ok ? C.ok : C.fail,
+              borderLeft: `3px solid ${o.ok ? C.ok : C.fail}` }}>
+              {o.ok ? <span style={{ fontWeight: 700 }}>CORRECT: </span> : <span style={{ fontWeight: 700 }}>INCORRECT: </span>}{o.expl}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 ```
 

@@ -15,16 +15,8 @@ const client = new Anthropic({ apiKey: API_KEY });
 // DIRECTORIES
 // ============================================================
 const OUTPUT_DIR = path.join(process.cwd(), "generated-walkthroughs-tmua");
-const REF_DIR = path.join(process.cwd(), "reference-code-tmua");
 const SCREENSHOT_DIR = path.join(process.cwd(), "question-screenshots");
 const HANDOVER_FILE = path.join(process.cwd(), "HANDOVER_v4.md");
-
-function loadRef(filename: string): string {
-  const fp = path.join(REF_DIR, filename);
-  if (fs.existsSync(fp)) return fs.readFileSync(fp, "utf-8");
-  console.warn(`  Warning: reference file ${filename} not found, skipping`);
-  return "";
-}
 
 function loadScreenshot(filename: string): string | null {
   const fp = path.join(SCREENSHOT_DIR, filename);
@@ -43,133 +35,6 @@ function loadHandover(): string {
 }
 
 // ============================================================
-// TOPIC TAXONOMY -> REFERENCE FILE MAPPING
-// ============================================================
-// Maps broad question categories to the best existing reference files.
-// When a new question comes in, its topicTag is matched against these
-// categories and the most relevant 1-2 reference files are selected.
-// This means the model sees a gold-standard example of the SAME kind
-// of walkthrough it needs to produce.
-
-interface TopicMapping {
-  keywords: string[];      // matched against topicTag (case-insensitive)
-  refs: string[];           // reference files to include
-  paperBias?: number;       // 1 = prefer P1 refs, 2 = prefer P2 refs
-}
-
-const TOPIC_MAP: TopicMapping[] = [
-  // --- GEOMETRY ---
-  {
-    keywords: ["circle", "circles"],
-    refs: ["tmua_2022_p1_q13.jsx", "tmua_2022_p1_q17.jsx"],
-  },
-  {
-    keywords: ["triangle", "kite", "polygon", "geometric reasoning"],
-    refs: ["tmua_2022_p2_q11.jsx", "tmua_2023_p2_q8.jsx"],
-  },
-  {
-    keywords: ["coordinate geometry", "perpendicular", "gradient"],
-    refs: ["tmua_2022_p1_q16.jsx"],
-  },
-  // --- ALGEBRA & FUNCTIONS ---
-  {
-    keywords: ["quadratic", "optimisation", "completing the square"],
-    refs: ["tmua_2022_p1_q12.jsx", "tmua_2023_p2_q10.jsx"],
-  },
-  {
-    keywords: ["exponential", "logarithm", "log"],
-    refs: ["tmua_2022_p1_q15.jsx"],
-  },
-  {
-    keywords: ["integration", "integral", "area"],
-    refs: ["tmua_2023_p2_q17.jsx", "tmua_2023_p2_q20.jsx"],
-  },
-  {
-    keywords: ["series", "sequence", "geometric series", "sum"],
-    refs: ["tmua_2022_p1_q17.jsx", "tmua_2023_p2_q17.jsx"],
-  },
-  {
-    keywords: ["graph transformation", "transformation", "translation"],
-    refs: ["tmua_2023_p2_q6.jsx"],
-  },
-  {
-    keywords: ["trigonometry", "trig", "sin", "cos"],
-    refs: ["tmua_2022_p2_q18.jsx", "tmua_2023_p2_q12.jsx"],
-  },
-  {
-    keywords: ["binomial", "expansion", "coefficient"],
-    refs: ["tmua_2022_p2_q2.jsx"],
-  },
-  {
-    keywords: ["absolute value", "modulus", "inequality", "inequalities"],
-    refs: ["tmua_2022_p2_q14.jsx", "tmua_2022_p2_q9.jsx"],
-  },
-  {
-    keywords: ["function", "domain", "range", "composition"],
-    refs: ["tmua_2022_p2_q18.jsx", "tmua_2023_p2_q20.jsx"],
-  },
-  // --- LOGIC (Paper 2 heavy) ---
-  {
-    keywords: ["logic", "converse", "contrapositive", "sufficient", "necessary", "only if", "equivalence", "implication"],
-    refs: ["tmua_2022_p2_q5.jsx", "tmua_2023_p2_q11.jsx"],
-    paperBias: 2,
-  },
-  {
-    keywords: ["proof", "proof analysis", "proof checking", "error"],
-    refs: ["tmua_2022_p2_q17.jsx", "tmua_2023_p2_q10.jsx"],
-    paperBias: 2,
-  },
-  // --- COMBINATORICS ---
-  {
-    keywords: ["pigeonhole", "combinatorics", "counting"],
-    refs: ["tmua_2022_p2_q8.jsx"],
-  },
-  // --- SEQUENCES & STATEMENTS ---
-  {
-    keywords: ["statement", "must be true", "which must"],
-    refs: ["tmua_2022_p2_q16.jsx", "tmua_2022_p2_q9.jsx"],
-    paperBias: 2,
-  },
-  // --- GRAPH MATCHING ---
-  {
-    keywords: ["graph matching", "sketch", "curve"],
-    refs: ["tmua_2022_p2_q18.jsx"],
-  },
-  // --- CEILING / FLOOR / STEP FUNCTION ---
-  {
-    keywords: ["ceiling", "floor", "step function"],
-    refs: ["tmua_2023_p2_q17.jsx"],
-  },
-];
-
-function selectRefs(topicTag: string, paper: number): string[] {
-  const tag = topicTag.toLowerCase();
-  const matched: string[] = [];
-
-  for (const mapping of TOPIC_MAP) {
-    if (mapping.keywords.some((kw) => tag.includes(kw.toLowerCase()))) {
-      matched.push(...mapping.refs);
-    }
-  }
-
-  // Deduplicate
-  const unique = [...new Set(matched)];
-
-  // If nothing matched, pick a general-purpose reference based on paper
-  if (unique.length === 0) {
-    if (paper === 1) {
-      return ["tmua_2022_p1_q15.jsx", "tmua_2022_p1_q13.jsx"];
-    } else {
-      return ["tmua_2022_p2_q5.jsx", "tmua_2023_p2_q11.jsx"];
-    }
-  }
-
-  // Cap at 2 references to stay within context limits
-  // (each ref is ~500-650 lines, so 2 refs ~ 1200 lines ~ 40K tokens)
-  return unique.slice(0, 2);
-}
-
-// ============================================================
 // SYSTEM PROMPT
 // ============================================================
 function buildSystemPrompt(handover: string): string {
@@ -177,8 +42,7 @@ function buildSystemPrompt(handover: string): string {
 
 You will receive:
 1. A SCREENSHOT of the actual question from the exam paper. This is the ground truth.
-2. REFERENCE CODE: existing walkthroughs that define the exact style, structure, and patterns you must match.
-3. A HANDOVER DOCUMENT: the complete design system, pedagogy principles, component patterns, and rules built up over multiple sessions. This is the authoritative specification. Follow every rule in it.
+2. A HANDOVER DOCUMENT: the complete design system, pedagogy principles, component patterns (with code), and rules built up over multiple sessions. This is the authoritative specification. Follow every rule in it. Use the exact code patterns provided.
 
 === HANDOVER DOCUMENT ===
 ${handover}
@@ -206,7 +70,6 @@ interface Question {
   answer: string;
   topicTag: string;
   screenshotFile: string;   // e.g. "tmua_2023_p2_q6.png"
-  refOverrides?: string[];  // optional: manually specify reference files
 }
 
 // Pre-populated with the remaining questions from the handover doc.
@@ -217,7 +80,7 @@ interface Question {
 const questions: Question[] = [
   // ── 2022 Paper 1 (all 20) ──
   { year: 2022, paper: 1, qNum: 1,  id: "tmua_2022_p1_q1",  answer: "C", topicTag: "Trigonometric Equations",       screenshotFile: "tmua_2022_p1_q1.png" },
-  { year: 2022, paper: 1, qNum: 2,  id: "tmua_2022_p1_q2",  answer: "D", topicTag: "Circle Equations",              screenshotFile: "tmua_2022_p1_q2.png" },
+  { year: 2022, paper: 1, qNum: 2,  id: "tmua_2022_p1_q2",  answer: "D", topicTag: "Completing the Square & Inequalities", screenshotFile: "tmua_2022_p1_q2.png" },
   { year: 2022, paper: 1, qNum: 3,  id: "tmua_2022_p1_q3",  answer: "F", topicTag: "Integration & Functions",       screenshotFile: "tmua_2022_p1_q3.png" },
   { year: 2022, paper: 1, qNum: 4,  id: "tmua_2022_p1_q4",  answer: "C", topicTag: "Circle Sectors",                screenshotFile: "tmua_2022_p1_q4.png" },
   { year: 2022, paper: 1, qNum: 5,  id: "tmua_2022_p1_q5",  answer: "H", topicTag: "Sequences",                     screenshotFile: "tmua_2022_p1_q5.png" },
@@ -278,15 +141,6 @@ async function generateOne(q: Question, index: number, total: number, handover: 
   }
   console.log(`  Screenshot: ${q.screenshotFile} loaded (${(screenshot.length * 0.75 / 1024).toFixed(0)}KB)`);
 
-  // Select reference files
-  const refFilenames = q.refOverrides || selectRefs(q.topicTag, q.paper);
-  const refs = refFilenames.map((f) => loadRef(f)).filter((r) => r.length > 0);
-  console.log(`  Reference files: ${refs.length > 0 ? refFilenames.join(", ") : "none (using defaults)"}`);
-
-  const refBlock = refs.length > 0
-    ? `\n\n=== REFERENCE CODE (match this style exactly) ===\n${refs.map((r, i) => `--- Reference ${i + 1}: ${refFilenames[i]} ---\n${r}`).join("\n\n")}\n=== END REFERENCE CODE ===`
-    : "";
-
   const textPrompt = `Build an interactive walkthrough for this TMUA question.
 
 The SCREENSHOT above shows the exact question from the TMUA ${q.year} Paper ${q.paper} exam. This is the ground truth for all question text, expressions, diagrams, and answer options.
@@ -297,9 +151,8 @@ YEAR: ${q.year}
 TOPIC TAG: ${q.topicTag}
 SOURCE: TMUA ${q.year} Paper ${q.paper}
 VERIFIED CORRECT ANSWER: ${q.answer}
-${refBlock}
 
-Solve the question, verify your answer matches ${q.answer}, then build the complete 5-step walkthrough following the handover document and matching the reference code style exactly.
+Solve the question, verify your answer matches ${q.answer}, then build the complete 5-step walkthrough using the exact code patterns from the handover document.
 
 Output ONLY the React code.`;
 
@@ -380,7 +233,6 @@ async function main() {
   console.log("=== TMUA Interactive Walkthrough Generator ===");
   console.log(`Output:       ${OUTPUT_DIR}`);
   console.log(`Screenshots:  ${SCREENSHOT_DIR}`);
-  console.log(`References:   ${REF_DIR}`);
   console.log(`Handover:     ${HANDOVER_FILE}`);
 
   if (!fs.existsSync(OUTPUT_DIR)) fs.mkdirSync(OUTPUT_DIR, { recursive: true });
@@ -404,13 +256,6 @@ async function main() {
     fs.existsSync(path.join(SCREENSHOT_DIR, q.screenshotFile))
   );
   console.log(`Screenshots:  ${availableScreenshots.length}/${questions.length} available`);
-
-  if (!fs.existsSync(REF_DIR)) {
-    console.warn("\nWARNING: reference-code-tmua/ not found. Quality may be lower.\n");
-  } else {
-    const refFiles = fs.readdirSync(REF_DIR).filter((f) => f.endsWith(".jsx"));
-    console.log(`References:   ${refFiles.length} JSX files`);
-  }
 
   // Parse CLI args
   const args = process.argv.slice(2);
