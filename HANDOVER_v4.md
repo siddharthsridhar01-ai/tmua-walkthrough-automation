@@ -475,14 +475,54 @@ For any "if A then B" / "only if" / "sufficient/necessary" statement:
 - Arrow green when consistent, red when violated, grey when vacuously true
 - Include explanation text below
 
-### SVG Integral/Summation Notation
+### SVG Integral/Summation Notation — MANDATORY for all integrals and sums
+**NEVER use plain text for integrals or summations.** Plain `∫` or `Σ` characters cannot show limits properly and look broken. ALWAYS use these inline SVG components which render the symbol with upper and lower limits correctly positioned:
+
+**Integral with limits:**
 ```jsx
-<svg viewBox="0 0 80 80" width="64" height="64">
-  <text x="40" y="12" fill={C.muted} fontSize="11" textAnchor="middle" fontFamily={mathFont}>upper</text>
-  <text x="40" y="56" fill={C.white} fontSize="42" textAnchor="middle" fontFamily={mathFont}>{"\u222B"}</text>
-  <text x="40" y="76" fill={C.muted} fontSize="11" textAnchor="middle" fontFamily={mathFont}>lower</text>
-</svg>
+function IntNotation({ lower, upper, size }) {
+  const s = size || "normal";
+  const w = s === "small" ? 24 : 32;
+  const h = s === "small" ? 40 : 54;
+  const symSize = s === "small" ? 28 : 38;
+  const limSize = s === "small" ? 8 : 10;
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} width={w} height={h}
+      style={{ display: "inline-block", verticalAlign: "middle" }}>
+      <text x={w/2} y={limSize+1} fill={C.muted} fontSize={limSize}
+        textAnchor="middle" fontFamily={mathFont}>{upper}</text>
+      <text x={w/2} y={h/2+symSize*0.3} fill={C.white} fontSize={symSize}
+        textAnchor="middle" fontFamily={mathFont}>{"\u222B"}</text>
+      <text x={w/2} y={h-1} fill={C.muted} fontSize={limSize}
+        textAnchor="middle" fontFamily={mathFont}>{lower}</text>
+    </svg>
+  );
+}
+// Usage: <IntNotation lower="0" upper="1" /> f(x) dx = 1
 ```
+
+**Summation with limits:**
+```jsx
+function SumNotation({ lower, upper, size }) {
+  const s = size || "normal";
+  const w = s === "small" ? 28 : 38;
+  const h = s === "small" ? 36 : 48;
+  const sigmaSize = s === "small" ? 22 : 30;
+  const limSize = s === "small" ? 8 : 10;
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} width={w} height={h}
+      style={{ display: "inline-block", verticalAlign: "middle" }}>
+      <text x={w/2} y={limSize+1} fill={C.muted} fontSize={limSize}
+        textAnchor="middle" fontFamily={mathFont}>{upper}</text>
+      <text x={w/2} y={h/2+sigmaSize*0.35} fill={C.white} fontSize={sigmaSize}
+        textAnchor="middle" fontFamily={mathFont}>{"\u03A3"}</text>
+      <text x={w/2} y={h-1} fill={C.muted} fontSize={limSize}
+        textAnchor="middle" fontFamily={mathFont}>{lower}</text>
+    </svg>
+  );
+}
+```
+Include these component definitions at the top of any walkthrough that uses integrals or sums. The limits must ALWAYS be visible and correctly positioned above and below the symbol.
 
 ---
 
