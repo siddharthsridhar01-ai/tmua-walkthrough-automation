@@ -106,7 +106,7 @@ Every question follows this pattern:
 - Header: "QUESTION [N]"
 - Exact question wording copied from the paper
 - Diagram showing ONLY what is given (no computed values)
-- **Diagrams must match the original question's visual style as closely as possible.** If the question shows two sectors side by side with radius labels, reproduce that exact layout with similar proportions, angles, and label positions. If the question shows a triangle with side lengths and an angle, draw that triangle with the same orientation. The Read step diagram IS the question — it should look like the student is reading the actual exam paper in dark mode.
+- **Diagrams must match the original question EXACTLY.** Match orientation (if sectors point up-right in the paper, they point up-right in the walkthrough, not inverted), match relative sizes, match label positions, match layout (side-by-side, stacked, etc.). Study the screenshot carefully: which direction do shapes face? Where are labels placed? What proportions are used? Reproduce all of this. The Read step diagram IS the question — it should look like the student is reading the actual exam paper in dark mode.
 - For unknown values (e.g. k), show as general/schematic (dashed outlines, "k" labels, arrows indicating freedom)
 - Do NOT show computed values like "120", "PQ = 6\u221A3" here
 
@@ -259,6 +259,10 @@ GOOD example (Q3 integral verify): Graph with shaded area on the left filling it
 BAD example: A small number line (100px tall) inside a card that's 400px tall because it's side-by-side with a tall circle diagram. The 300px of empty dark space below the number line looks terrible. Fix: either make the number line card shorter (don't force equal heights), or fill the space below the number line with status cards.
 
 33. **Verify layout is flexible, not templated** - The Verify step does NOT have to follow one fixed layout, but MUST fit in one viewport (principle 11). Choose the arrangement that best serves the content at a readable-but-compact size. All content fills the same container width (~820px). Good patterns: side-by-side diagrams (each ~380px wide) with controls below; one diagram with controls/status cards beside it filling the same height; two compact diagrams stacked with minimal gap. Bad patterns: two panels forced to equal height with one mostly empty; tiny side-by-side panels; oversized single diagram pushing controls off-screen. The Verify Design Principles table specifies WHAT to build, not HOW to lay it out.
+
+34. **Show formulas being applied, not just results** - In Solve steps and Verify status cards, show the formula and the substitution, not just the final number. E.g. for a sector perimeter, show "Perimeter = 2r + arc = 2(9) + 6 = 24" not just "24". For area difference, show "Area = (1/2)r^2 theta" then the subtraction. The student needs to see WHERE the number comes from. In Verify, status cards can show the formula label (e.g. "2r + arc") and the computed value. This is a tutoring product: the working is the point.
+
+35. **Use shared labels to show relationships visually** - When the question states a relationship between objects (similar, congruent, equal angles, parallel), make it visually obvious through shared labels and annotations. E.g. if two sectors are similar, label BOTH with the same angle theta to show they share it. If two triangles share a side, label it with the same variable on both. If gradients are perpendicular, annotate both with their gradient values. The diagram should communicate the relationship at a glance without the student needing to read the text.
 
 ---
 
