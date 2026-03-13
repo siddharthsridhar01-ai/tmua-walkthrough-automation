@@ -109,7 +109,7 @@ Every question follows this pattern:
 - **Diagrams must match the original question EXACTLY.** Match orientation (if sectors point up-right in the paper, they point up-right in the walkthrough, not inverted), match relative sizes, match label positions, match layout (side-by-side, stacked, etc.). Study the screenshot carefully: which direction do shapes face? Where are labels placed? What proportions are used? Reproduce all of this. The Read step diagram IS the question — it should look like the student is reading the actual exam paper in dark mode.
 - For unknown values (e.g. k), show as general/schematic (dashed outlines, "k" labels, arrows indicating freedom)
 - Do NOT show computed values like "120", "PQ = 6\u221A3" here
-- **Integrals and sums in question text:** When the question text contains an integral or summation with limits, use the IntNotation or SumNotation SVG component inline within the JSX paragraph. Do NOT use a plain `∫` character with sub/sup — it renders incorrectly. Example: `<p>...and <IntNotation lower="0" upper="1" /> f(x) dx = 1</p>`. This applies everywhere the integral/sum appears: Read step, QuestionSummary, Solve steps.
+- **Integrals and sums in question text:** When the question text contains an integral or summation with limits, use the `Integral` or `Sigma` component (see Component Patterns) inline within JSX. Do NOT use a plain `∫` character with sub/sup. Example: `<p>...and <Integral lower="0" upper="1" /> f(x) dx = 1</p>`. This applies everywhere: Read step, QuestionSummary, Solve steps.
 - **Options display (MUST be identical across all questions):** After the question card, show options in a fixed 4-column grid with consistent box sizes. Add marginBottom to separate from nav buttons. Use this exact pattern:
 ```jsx
 <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginTop: 14, marginBottom: 24 }}>
@@ -218,7 +218,7 @@ const buildSegments = (evalFn) => {
 
 19. **Dynamic y-range for function graphs** - When the curve amplitude depends on a parameter (e.g. p^2 sin x), the y-range MUST adapt. Compute the actual amplitude from the parameter and add 15% padding. Never use a fixed y-range like [-0.5, 0.5] when the curve could go outside it.
 
-20. **Strict 0.01 tolerance — enforced in code pattern** - See the Verify Layout code pattern in Component Patterns. Define `const TOL = 0.01;` at the top of every verify component. Use ONLY this constant for all correctness checks: green borders, tick marks, success banners, preset button highlights. The `allCorrect` variable must be true for the success banner to show. This is not a guideline, it is a code pattern you must follow. If a = 6.1 and the target is 6, that is NOT correct (diff = 0.1 > 0.01). If an integral = 0.992 and the target is 1, that is NOT correct (diff = 0.008 < 0.01, so this one IS correct). Be precise.
+20. **Strict correctness checks — use analytical values, not numerical approximations** - Define `const TOL = 0.01;` at the top of every verify component. But more importantly: when checking whether the answer is correct at a preset/answer value, compute the check using the EXACT ANALYTICAL formula, not a numerical approximation. For example, if the integral of (a/2)x^2 + bx + c from 0 to 1 should equal 1, compute it as `a/6 + b/2 + c` (the exact antiderivative evaluated), NOT as a Riemann sum that gives 0.992. Numerical methods are for plotting curves, not for checking correctness. The `allCorrect` flag should use exact formulas so it is precisely true at the answer value and precisely false everywhere else. See the Verify Layout code pattern for the full structure.
 
 21. **Adaptive scan ranges for numerical methods** - When counting intersections or finding roots numerically, scale the scan range with the problem parameters. E.g. for a^x = x with a close to 1, intersections can be at x ~ 4/ln(a), which is very large. Use `scanMax = max(20, 4/ln(a) + 5)` with high resolution (4000+ points).
 
@@ -236,7 +236,7 @@ const buildSegments = (evalFn) => {
 
 28. **SVG summation notation** - Use inline SVG for proper summation symbols with limits above/below, following the integral notation pattern:
 ```jsx
-function SumNotation({ lower, upper, size }) {
+function Sigma({ lower, upper, size }) {
   const s = size || "normal";
   const w = s === "small" ? 28 : 38;
   const h = s === "small" ? 36 : 48;
@@ -327,8 +327,8 @@ export default function App() {
           <h2 style={{ fontSize: 17, fontWeight: 700, color: C.white, margin: 0 }}>{stepsMeta[step].title}</h2>
         </div>
         {/* Steps 0-4 rendered conditionally here */}
-        {/* Navigation */}
-        <div style={{ display: "flex", gap: 12, paddingBottom: 32 }}>
+        {/* Navigation — marginTop ensures gap from content above on ALL steps */}
+        <div style={{ display: "flex", gap: 12, marginTop: 24, paddingBottom: 32 }}>
           <button onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0} style={{ flex: 1, padding: "13px 20px", borderRadius: 10, border: `1px solid ${C.border}`, background: step === 0 ? C.card : "#1e2030", color: step === 0 ? C.muted : C.text, fontSize: 14, fontWeight: 600, cursor: step === 0 ? "not-allowed" : "pointer", opacity: step === 0 ? 0.4 : 1 }}>{"\u2190"} Previous</button>
           {step < 4 ? (
             <button onClick={() => setStep(step + 1)} style={{ flex: 1, padding: "13px 20px", borderRadius: 10, border: "none", background: `linear-gradient(135deg,${C.accent},${C.accentLight})`, color: C.white, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Next {"\u2192"}</button>
@@ -343,7 +343,7 @@ export default function App() {
 ```
 
 ### QuestionSummary
-Use IntNotation/SumNotation components here too when the question contains integrals or sums. They work inline within `<p>` tags.
+Use Integral/Sigma components here too when the question contains integrals or sums. They work inline within `<p>` tags.
 ```jsx
 function QuestionSummary() {
   return (
@@ -351,7 +351,7 @@ function QuestionSummary() {
       <p style={{ margin: "0 0 6px", fontSize: 13, color: C.muted, lineHeight: 1.6 }}>
         <span style={{ fontWeight: 700, color: C.muted, letterSpacing: 0.5, marginRight: 6 }}>QN</span>
         Question text here. Use mathFont for expressions. Highlight the ask in <strong style={{ color: C.assum }}>amber</strong>.
-        {/* For integrals: <IntNotation lower="0" upper="1" size="small" /> f(x) dx = 1 */}
+        {/* For integrals: <Integral lower="0" upper="1" size="small" /> f(x) dx = 1 */}
       </p>
       <div style={{ display: "flex", justifyContent: "center", gap: 6, fontSize: 10, fontWeight: 600, color: C.muted, flexWrap: "wrap" }}>
         <span>A: ...</span><span>B: ...</span>{/* all 8 options A-H */}
@@ -362,15 +362,15 @@ function QuestionSummary() {
 ```
 
 ### SolveStep (progressive reveal)
-The `text` field should use JSX (not a plain string) whenever it contains unicode symbols or math expressions. This avoids the `{"\uXXXX"}` inside string literal bug. Use IntNotation/SumNotation in `math` fields when showing integral or sum working.
+The `text` field should use JSX (not a plain string) whenever it contains unicode symbols or math expressions. This avoids the `{"\uXXXX"}` inside string literal bug. Use Integral/Sigma in `math` fields when showing integral or sum working.
 ```jsx
 function SolveStep() {
   const [revealed, setRevealed] = useState(0);
   const steps = [
-    { label: "STEP NAME", text: <span>Brief signpost with {"\u00D7"} symbol.</span>, math: (<div><IntNotation lower="0" upper="1" size="small" /> f(x) dx = ...</div>), color: C.ps, graph: "graphType" },
+    { label: "STEP NAME", text: <span>Brief signpost with {"\u00D7"} symbol.</span>, math: (<div><Integral lower="0" upper="1" size="small" /> f(x) dx = ...</div>), color: C.ps, graph: "graphType" },
     // ... more steps. Final step uses color: C.concl
     // IMPORTANT: use JSX <span> for text, not "string", when text contains unicode or math
-    // IMPORTANT: use IntNotation/SumNotation in math fields, never plain ∫ or Σ
+    // IMPORTANT: use Integral/Sigma in math fields, never plain ∫ or Σ
   ];
   return (
     <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "22px 24px", marginBottom: 18 }}>
@@ -514,54 +514,35 @@ For any "if A then B" / "only if" / "sufficient/necessary" statement:
 - Arrow green when consistent, red when violated, grey when vacuously true
 - Include explanation text below
 
-### SVG Integral/Summation Notation — MANDATORY for all integrals and sums
-**NEVER use plain text for integrals or summations.** Plain `∫` or `Σ` characters cannot show limits properly and look broken. ALWAYS use these inline SVG components which render the symbol with upper and lower limits correctly positioned:
+### Integral and Summation Notation — MANDATORY
+**NEVER use a bare ∫ or Σ character.** They cannot show limits and look broken. Use these HTML/CSS components instead:
 
-**Integral with limits:**
 ```jsx
-function IntNotation({ lower, upper, size }) {
-  const s = size || "normal";
-  const w = s === "small" ? 24 : 32;
-  const h = s === "small" ? 40 : 54;
-  const symSize = s === "small" ? 28 : 38;
-  const limSize = s === "small" ? 8 : 10;
+function Integral({ lower, upper }) {
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} width={w} height={h}
-      style={{ display: "inline-block", verticalAlign: "middle" }}>
-      <text x={w/2} y={limSize+1} fill={C.muted} fontSize={limSize}
-        textAnchor="middle" fontFamily={mathFont}>{upper}</text>
-      <text x={w/2} y={h/2+symSize*0.3} fill={C.white} fontSize={symSize}
-        textAnchor="middle" fontFamily={mathFont}>{"\u222B"}</text>
-      <text x={w/2} y={h-1} fill={C.muted} fontSize={limSize}
-        textAnchor="middle" fontFamily={mathFont}>{lower}</text>
-    </svg>
+    <span style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", verticalAlign: "middle", margin: "0 2px", lineHeight: 1, fontFamily: mathFont }}>
+      <span style={{ fontSize: 9, color: C.muted }}>{upper}</span>
+      <span style={{ fontSize: 28, lineHeight: 0.9, color: C.white }}>{"\u222B"}</span>
+      <span style={{ fontSize: 9, color: C.muted }}>{lower}</span>
+    </span>
   );
 }
-// Usage: <IntNotation lower="0" upper="1" /> f(x) dx = 1
-```
 
-**Summation with limits:**
-```jsx
-function SumNotation({ lower, upper, size }) {
-  const s = size || "normal";
-  const w = s === "small" ? 28 : 38;
-  const h = s === "small" ? 36 : 48;
-  const sigmaSize = s === "small" ? 22 : 30;
-  const limSize = s === "small" ? 8 : 10;
+function Sigma({ lower, upper }) {
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} width={w} height={h}
-      style={{ display: "inline-block", verticalAlign: "middle" }}>
-      <text x={w/2} y={limSize+1} fill={C.muted} fontSize={limSize}
-        textAnchor="middle" fontFamily={mathFont}>{upper}</text>
-      <text x={w/2} y={h/2+sigmaSize*0.35} fill={C.white} fontSize={sigmaSize}
-        textAnchor="middle" fontFamily={mathFont}>{"\u03A3"}</text>
-      <text x={w/2} y={h-1} fill={C.muted} fontSize={limSize}
-        textAnchor="middle" fontFamily={mathFont}>{lower}</text>
-    </svg>
+    <span style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", verticalAlign: "middle", margin: "0 2px", lineHeight: 1, fontFamily: mathFont }}>
+      <span style={{ fontSize: 9, color: C.muted }}>{upper}</span>
+      <span style={{ fontSize: 24, lineHeight: 0.9, color: C.white }}>{"\u03A3"}</span>
+      <span style={{ fontSize: 9, color: C.muted }}>{lower}</span>
+    </span>
   );
 }
 ```
-Include these component definitions at the top of any walkthrough that uses integrals or sums. The limits must ALWAYS be visible and correctly positioned above and below the symbol.
+Usage everywhere (Read step, QuestionSummary, Solve math boxes):
+```jsx
+<p>...and <Integral lower="0" upper="1" /> f(x) dx = 1, find...</p>
+```
+These use pure HTML flexbox (no SVG) so they work reliably inline in any context. Define them at the top of the component file whenever the question involves integrals or sums.
 
 ---
 
@@ -602,7 +583,7 @@ Match the verify format to the question type:
 - The solve step reveal pattern is reusable
 - Diagram components are becoming reusable (NumberLine, IntersectionGraph, PolygonDiagram, StepGraph, KiteDiagram, TriangleDiagram, LineGraph)
 - The arrow-notation logic checker pattern is reusable for all Paper 2 "must be true" / "only if" / "sufficient" questions
-- The SVG SumNotation / integral notation components are reusable
+- The SVG Sigma / integral notation components are reusable
 - Main variation is in the specific diagram/verify component per question
 
 ### Design improvements for future:
