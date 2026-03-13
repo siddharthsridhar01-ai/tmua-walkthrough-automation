@@ -109,6 +109,7 @@ Every question follows this pattern:
 - **Diagrams must match the original question EXACTLY.** Match orientation (if sectors point up-right in the paper, they point up-right in the walkthrough, not inverted), match relative sizes, match label positions, match layout (side-by-side, stacked, etc.). Study the screenshot carefully: which direction do shapes face? Where are labels placed? What proportions are used? Reproduce all of this. The Read step diagram IS the question — it should look like the student is reading the actual exam paper in dark mode.
 - For unknown values (e.g. k), show as general/schematic (dashed outlines, "k" labels, arrows indicating freedom)
 - Do NOT show computed values like "120", "PQ = 6\u221A3" here
+- **Integrals and sums in question text:** When the question text contains an integral or summation with limits, use the IntNotation or SumNotation SVG component inline within the JSX paragraph. Do NOT use a plain `∫` character with sub/sup — it renders incorrectly. Example: `<p>...and <IntNotation lower="0" upper="1" /> f(x) dx = 1</p>`. This applies everywhere the integral/sum appears: Read step, QuestionSummary, Solve steps.
 - **Options display (MUST be identical across all questions):** After the question card, show options in a consistent grid. Use this exact pattern:
 ```jsx
 <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
@@ -217,7 +218,7 @@ const buildSegments = (evalFn) => {
 
 19. **Dynamic y-range for function graphs** - When the curve amplitude depends on a parameter (e.g. p^2 sin x), the y-range MUST adapt. Compute the actual amplitude from the parameter and add 15% padding. Never use a fixed y-range like [-0.5, 0.5] when the curve could go outside it.
 
-20. **Tight thresholds everywhere — 0.01 tolerance** - Use `Math.abs(value - target) < 0.01` for ALL correctness checks: green highlights, "correct" labels, preset button active states, AND success messages like "Both conditions satisfied" or "Perfect!". A success/verified message should ONLY appear when ALL conditions are met within 0.01 tolerance simultaneously. If the area difference is 21.18 but the target is 21, that is NOT satisfied — do not show a green success banner. False positives are worse than false negatives: the student must learn that "close" is not "correct" in maths.
+20. **Strict 0.01 tolerance — enforced in code pattern** - See the Verify Layout code pattern in Component Patterns. Define `const TOL = 0.01;` at the top of every verify component. Use ONLY this constant for all correctness checks: green borders, tick marks, success banners, preset button highlights. The `allCorrect` variable must be true for the success banner to show. This is not a guideline, it is a code pattern you must follow. If a = 6.1 and the target is 6, that is NOT correct (diff = 0.1 > 0.01). If an integral = 0.992 and the target is 1, that is NOT correct (diff = 0.008 < 0.01, so this one IS correct). Be precise.
 
 21. **Adaptive scan ranges for numerical methods** - When counting intersections or finding roots numerically, scale the scan range with the problem parameters. E.g. for a^x = x with a close to 1, intersections can be at x ~ 4/ln(a), which is very large. Use `scanMax = max(20, 4/ln(a) + 5)` with high resolution (4000+ points).
 
@@ -342,6 +343,7 @@ export default function App() {
 ```
 
 ### QuestionSummary
+Use IntNotation/SumNotation components here too when the question contains integrals or sums. They work inline within `<p>` tags.
 ```jsx
 function QuestionSummary() {
   return (
@@ -349,6 +351,7 @@ function QuestionSummary() {
       <p style={{ margin: "0 0 6px", fontSize: 13, color: C.muted, lineHeight: 1.6 }}>
         <span style={{ fontWeight: 700, color: C.muted, letterSpacing: 0.5, marginRight: 6 }}>QN</span>
         Question text here. Use mathFont for expressions. Highlight the ask in <strong style={{ color: C.assum }}>amber</strong>.
+        {/* For integrals: <IntNotation lower="0" upper="1" size="small" /> f(x) dx = 1 */}
       </p>
       <div style={{ display: "flex", justifyContent: "center", gap: 6, fontSize: 10, fontWeight: 600, color: C.muted, flexWrap: "wrap" }}>
         <span>A: ...</span><span>B: ...</span>{/* all 8 options A-H */}
@@ -359,14 +362,15 @@ function QuestionSummary() {
 ```
 
 ### SolveStep (progressive reveal)
-The `text` field should use JSX (not a plain string) whenever it contains unicode symbols or math expressions. This avoids the `{"\uXXXX"}` inside string literal bug.
+The `text` field should use JSX (not a plain string) whenever it contains unicode symbols or math expressions. This avoids the `{"\uXXXX"}` inside string literal bug. Use IntNotation/SumNotation in `math` fields when showing integral or sum working.
 ```jsx
 function SolveStep() {
   const [revealed, setRevealed] = useState(0);
   const steps = [
-    { label: "STEP NAME", text: <span>Brief signpost with {"\u00D7"} symbol.</span>, math: (<div>...</div>), color: C.ps, graph: "graphType" },
+    { label: "STEP NAME", text: <span>Brief signpost with {"\u00D7"} symbol.</span>, math: (<div><IntNotation lower="0" upper="1" size="small" /> f(x) dx = ...</div>), color: C.ps, graph: "graphType" },
     // ... more steps. Final step uses color: C.concl
     // IMPORTANT: use JSX <span> for text, not "string", when text contains unicode or math
+    // IMPORTANT: use IntNotation/SumNotation in math fields, never plain ∫ or Σ
   ];
   return (
     <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "22px 24px", marginBottom: 18 }}>
@@ -404,17 +408,33 @@ function SolveStep() {
 ```
 
 ### Verify Layout (dashboard pattern)
-The verify step must fit in one viewport (~900px). Arrange as a dense dashboard:
+The verify step must fit in one viewport (~900px). Arrange as a dense dashboard.
+
+**MANDATORY: Define an isCorrect helper at the top of the verify component. Use EXACTLY 0.01 tolerance. The success banner ONLY shows when isCorrect is true.**
 ```jsx
-{/* Controls card: slider + preset buttons */}
+function VerifyExplorer() {
+  const [param, setParam] = useState(defaultValue);
+  
+  // MANDATORY: strict threshold for ALL correctness checks
+  const TOL = 0.01;
+  const check1 = Math.abs(computedValue1 - target1) < TOL;
+  const check2 = Math.abs(computedValue2 - target2) < TOL;
+  const allCorrect = check1 && check2; // ALL conditions must pass
+  // Use allCorrect for: success banner, green borders on status cards, "conditions satisfied" text
+  // Use individual checks (check1, check2) for per-card green ticks
+  // NEVER use a different tolerance anywhere else in this component
+```
+
+**Controls card: slider + preset buttons**
+```jsx
 <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 20px", marginBottom: 14 }}>
   <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 10 }}>
     <input type="range" ... style={{ flex: 1, accentColor: C.accent, height: 6 }} />
     <span style={{ minWidth: 80, fontSize: 16, fontWeight: 700, color: C.curve1, fontFamily: mathFont }}>label = value</span>
   </div>
   <div style={{ display: "flex", gap: 6 }}>
-    {/* Preset buttons */}
-    <button style={{ flex: 1, padding: "8px 4px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.card, color: C.muted, fontSize: 11, cursor: "pointer" }}>preset</button>
+    {/* Preset buttons — use TOL for active state too */}
+    <button style={{ flex: 1, padding: "8px 4px", borderRadius: 8, border: `1px solid ${Math.abs(param - presetVal) < TOL ? C.ok : C.border}`, background: Math.abs(param - presetVal) < TOL ? C.ok + "15" : C.card, color: Math.abs(param - presetVal) < TOL ? C.ok : C.muted, fontSize: 11, cursor: "pointer" }}>preset</button>
   </div>
 </div>
 
@@ -423,14 +443,22 @@ The verify step must fit in one viewport (~900px). Arrange as a dense dashboard:
   <MyDiagram compact={false} />
 </div>
 
-{/* Status cards row */}
+{/* Status cards row — use check1, check2 for individual card borders */}
 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 14 }}>
-  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 14px", textAlign: "center" }}>
+  <div style={{ background: C.card, border: `1px solid ${check1 ? C.ok + "66" : C.border}`, borderRadius: 12, padding: "12px 14px", textAlign: "center" }}>
     <div style={{ fontSize: 10, color: C.muted, fontWeight: 700, marginBottom: 4, textTransform: "uppercase" }}>Label</div>
-    <div style={{ fontSize: 20, fontWeight: 700, color: C.white, fontFamily: mathFont }}>value</div>
+    <div style={{ fontSize: 20, fontWeight: 700, color: check1 ? C.ok : C.white, fontFamily: mathFont }}>value</div>
+    {check1 && <div style={{ fontSize: 10, color: C.ok }}>Target: X {"\u2713"}</div>}
   </div>
-  {/* more status cards */}
+  {/* more status cards using their respective check variables */}
 </div>
+
+{/* Success banner — ONLY when allCorrect is true */}
+{allCorrect && (
+  <div style={{ background: C.conclBg, border: `1px solid ${C.ok}44`, borderRadius: 12, padding: "12px 16px", textAlign: "center", marginBottom: 14 }}>
+    <span style={{ fontSize: 14, fontWeight: 700, color: C.ok }}>All conditions satisfied!</span>
+  </div>
+)}
 
 {/* HINT box */}
 <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "12px 18px" }}>
