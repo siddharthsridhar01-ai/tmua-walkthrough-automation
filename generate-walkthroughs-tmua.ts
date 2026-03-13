@@ -114,6 +114,7 @@ CRITICAL LAYOUT RULES:
 - Use CSS grid or flexbox with row-based layouts. A good default is a 60/40 or 70/30 split between the main visual and the controls/info panel.
 - The answer/option cards section can be below the fold. But the interactive visual, sliders, and status panels should all be visible at once without scrolling.
 - Max container width: 820px, centred.
+- NEVER leave large empty areas inside cards. If an SVG diagram is small, shrink the card to fit tightly around it. If two items are side-by-side and one is shorter, fill the remaining space with status panels or controls, not empty dark space. Content should occupy at least 70% of every card's area. Think newspaper layout: every region has content, every pixel earns its place.
 
 BRANDING:
 Include this header at the top of every walkthrough:
@@ -164,7 +165,15 @@ REQUIRED ELEMENTS:
 9. Dark theme throughout using the C object
 
 STEP CONTENT:
-Step 0 (Read): Show the question exactly as it appears. Reproduce all text, diagrams (as proper SVG), and answer options. No working shown.
+
+Step 0 (Read): Reproduce the question EXACTLY as it appears in the screenshot.
+- Header: "QUESTION N" in small caps, C.accent colour, fontSize 13, fontWeight 700, letterSpacing 1
+- All question text reproduced verbatim in the same order as the original
+- Diagrams reproduced as SVG that VISUALLY MATCH the screenshot: same orientation, same proportions, same label positions. If the original shows sectors pointing up with the arc at the top, your SVG must show sectors pointing up with the arc at the top. If labels are to the right of a figure, place them to the right. Study the screenshot carefully and replicate the visual layout
+- The final line of the question (the "ask") should be in bold, white text
+- Answer options displayed in a grid at the bottom: use a consistent layout across ALL questions. 4 columns for 8 options (A-H in two rows), 4 columns for 7 options (4 top row, 3 bottom). Each option card: background C.card, border 1px solid C.border, borderRadius 10, padding "12px 8px", textAlign center, fontSize 14. Letter in C.accent fontWeight 700, value in C.text
+- No working, no computed values, no answer highlighting
+
 Step 1 (Setup): Explain the approach. Include an interactive exploration if the question has a parameter. Don't compute.
 Step 2 (Solve): Walk through the solution. Use whatever visual layout works best for this question.
 Step 3 (Verify): THE CENTREPIECE. Build the most interactive, visually rich verification possible. Sliders, live graphs, pulsing dots, status panels, presets. Everything visible at once, no scrolling.
