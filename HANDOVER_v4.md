@@ -110,17 +110,17 @@ Every question follows this pattern:
 - For unknown values (e.g. k), show as general/schematic (dashed outlines, "k" labels, arrows indicating freedom)
 - Do NOT show computed values like "120", "PQ = 6\u221A3" here
 - **Integrals and sums in question text:** When the question text contains an integral or summation with limits, use the IntNotation or SumNotation SVG component inline within the JSX paragraph. Do NOT use a plain `∫` character with sub/sup — it renders incorrectly. Example: `<p>...and <IntNotation lower="0" upper="1" /> f(x) dx = 1</p>`. This applies everywhere the integral/sum appears: Read step, QuestionSummary, Solve steps.
-- **Options display (MUST be identical across all questions):** After the question card, show options in a consistent grid. Use this exact pattern:
+- **Options display (MUST be identical across all questions):** After the question card, show options in a fixed 4-column grid with consistent box sizes. Add marginBottom to separate from nav buttons. Use this exact pattern:
 ```jsx
-<div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
-  {[{l:"A",v:"..."},{l:"B",v:"..."}, /* all options */].map(o => (
-    <div key={o.l} style={{ flex: "1 1 100px", minWidth: 90, background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, padding: "10px 14px", textAlign: "center", fontSize: 14, color: C.text }}>
+<div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginTop: 14, marginBottom: 24 }}>
+  {[{l:"A",v:"..."},{l:"B",v:"..."}, /* all options A-H */].map(o => (
+    <div key={o.l} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, padding: "10px 14px", textAlign: "center", fontSize: 14, color: C.text }}>
       <span style={{ fontWeight: 700, color: C.accent, marginRight: 8 }}>{o.l}</span>{o.v}
     </div>
   ))}
 </div>
 ```
-This gives uniform boxes that wrap naturally for 6, 7, or 8 options. Font size 14, accent-coloured letter, consistent padding. Do NOT vary this between questions.
+This gives 2 rows of 4 for 8 options, or 2 rows of 3+3/4+2 for 6-7 options, all boxes identical width. Do NOT use flexbox for options. Do NOT vary this between questions.
 
 ### Step 1: Setup
 - **Question refresher** at top
