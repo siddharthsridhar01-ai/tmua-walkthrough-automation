@@ -335,12 +335,14 @@ function QuestionSummary() {
 ```
 
 ### SolveStep (progressive reveal)
+The `text` field should use JSX (not a plain string) whenever it contains unicode symbols or math expressions. This avoids the `{"\uXXXX"}` inside string literal bug.
 ```jsx
 function SolveStep() {
   const [revealed, setRevealed] = useState(0);
   const steps = [
-    { label: "STEP NAME", text: "Brief signpost.", math: (<div>...</div>), color: C.ps, graph: "graphType" },
+    { label: "STEP NAME", text: <span>Brief signpost with {"\u00D7"} symbol.</span>, math: (<div>...</div>), color: C.ps, graph: "graphType" },
     // ... more steps. Final step uses color: C.concl
+    // IMPORTANT: use JSX <span> for text, not "string", when text contains unicode or math
   ];
   return (
     <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "22px 24px", marginBottom: 18 }}>
