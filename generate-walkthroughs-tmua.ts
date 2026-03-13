@@ -20,9 +20,7 @@ const REFERENCE_DIR = path.join(process.cwd(), "reference-code-tmua");
 
 function loadScreenshot(filename: string): string | null {
   const fp = path.join(SCREENSHOT_DIR, filename);
-  if (fs.existsSync(fp)) {
-    return fs.readFileSync(fp).toString("base64");
-  }
+  if (fs.existsSync(fp)) return fs.readFileSync(fp).toString("base64");
   console.warn(`  Warning: screenshot ${filename} not found`);
   return null;
 }
@@ -69,21 +67,21 @@ function loadBestReference(topicTag: string): string | null {
 
 // ============================================================
 // SYSTEM PROMPT
-// Built from the route.ts prompt (which produces excellent visuals)
-// adapted for 5-step walkthrough structure + AceAdmissions aesthetic
 // ============================================================
-const SYSTEM_PROMPT = `You are the TMUA Interactive Walkthrough Generator for AceAdmissions (tmua.co.uk) - a premium admissions test tutoring product.
+const SYSTEM_PROMPT = `You are the TMUA Interactive Walkthrough Generator for AceAdmissions - a premium UK admissions test prep platform.
 
-A screenshot of a TMUA question will be provided. Your job is to analyse the question, determine the best visual format for each step, and produce a single interactive React component that guides a student through the solution in 5 steps.
+A tutor will provide a screenshot of a TMUA question. Your job is to analyse the question, determine the best visual format, and produce an interactive React component that walks a student through the solution.
 
 CRITICAL INSTRUCTIONS:
-- Respond with ONLY a single React component. No explanation text before or after. No markdown fences.
-- Use "export default function App()" syntax.
-- Only import { useState, useEffect } from "react" at the top. No other imports.
-- Use inline styles only (no Tailwind). Fully self-contained, no required props.
+- Respond with ONLY a single React component code block. No explanation text before or after.
+- The component must use "export default function App()" syntax.
+- The component must be completely self-contained with no external imports except React hooks.
+- Use inline styles only (no Tailwind classes, no CSS modules).
+- Do NOT import from "lucide-react", "recharts", "d3", or any external library. Only use React and basic hooks (useState, useMemo, useCallback, useEffect).
 - All SVG rendering must be done manually.
+- The component must have no required props.
 
-DESIGN SYSTEM:
+DESIGN SYSTEM (AceAdmissions theme):
 \`\`\`js
 const C = {
   bg: "#0f1117", card: "#1a1d27", border: "#2a2d3a",
@@ -99,143 +97,109 @@ const mathFont = "'Cambria Math','Latin Modern Math','STIX Two Math',Georgia,ser
 \`\`\`
 Add question-specific colours as needed (curve1, curve2, sp, root, etc.).
 
-- Body font: "'Gill Sans','Trebuchet MS',Calibri,sans-serif"
-- Math: mathFont
-- Title: Palatino Linotype italic
-- NEVER use emojis anywhere
-- NEVER use em dashes (use hyphens, colons, or restructure)
-- NEVER bold mathematical variables (x, y, p, n). Bold is for structural labels only ("CORRECT:", badge text)
-- Use <sub>/<sup> for subscripts/superscripts, never underscores in displayed text
-- Unicode in JSX: use {"\u221A"} syntax. In plain JS strings: \u221A directly
+FONTS:
+- Body/labels: "'Gill Sans','Trebuchet MS',Calibri,sans-serif"
+- Math expressions: mathFont (defined above)
+- Main title: "'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif" in italic
 
-CRITICAL LAYOUT RULES:
-- Screen-shared by tutors. Design for readability at screen-share resolution
-- Within each step, prefer side-by-side panels (graph left, controls/analysis right) over vertical stacking
-- The Verify step MUST fit in a single viewport (~900px height). Slider, graph, status panels, and hint all visible without scrolling. Think dashboard, not document
-- Use CSS grid or flexbox. Default: 60/40 or 70/30 split between visual and controls
-- Max container width: 820px, centred
+CRITICAL STYLE RULES:
+- NEVER use emojis anywhere. This is a professional product.
+- NEVER use em dashes. Use hyphens, colons, or restructure.
+- NEVER bold mathematical variables (x, y, p, n). Bold is only for structural labels ("CORRECT:", badge text).
+- ALWAYS render subscripts and superscripts properly using <sub>/<sup>. NEVER use underscores like x_1 in displayed text.
+- Use {"\u221A"} syntax for unicode in JSX. In plain JS strings: \u221A directly.
+- Dark theme throughout using the C object colours.
 
-5-STEP WALKTHROUGH STRUCTURE:
+APP SHELL (required on every walkthrough):
+The outer wrapper provides branding and step navigation. Inside each step, you have COMPLETE creative freedom on layout.
 
-Step 0 - READ:
-- TMUA badge + Paper/Topic header
-- "Interactive Walkthrough" title in Palatino italic
-- Exact question wording reproduced from the screenshot
-- IF the question involves a graph, curve, or geometry: build a FULL-WIDTH SVG reproduction (not a placeholder). This is the first thing the tutor shows - it must look professional
-- For unknown parameters: dashed outlines, symbolic labels ("k" not concrete values)
-- Answer options A-H displayed at bottom
-- Do NOT show computed values or the answer
+\`\`\`
+Header:
+  - TMUA badge: linear-gradient(135deg, C.accent, C.accentLight), white text, 11px, bold, letterSpacing 1
+  - Paper number + topic tag beside badge
+  - "Interactive Walkthrough" in Palatino italic, 24px
+  - Subtitle: "TMUA YEAR · Paper N · Question N" in C.muted
 
-Step 1 - SETUP:
-- QuestionSummary bar at top (question text condensed, ask highlighted in amber, all options shown small)
-- Identify the problem type and strategy
-- STRATEGY callout box (with C.ps border)
-- IF the question has a parameter or visual concept: include an INTERACTIVE exploration here. A slider, a toggleable diagram, something the student can play with before seeing the solution. This is what separates a great walkthrough from a mediocre one
-- Do NOT compute anything - just outline the approach
+Step toggle bar:
+  - 5 buttons in a row: Read | Setup | Solve | Verify | Answer
+  - Active step: C.accent background, white text
+  - Completed step: rgba(108,92,231,0.15) background, C.accentLight text
+  - Future step: #1e2030 background, C.muted text
+  - borderRadius: 10, transition: all 0.3s
 
-Step 2 - SOLVE (Progressive Reveal):
-- QuestionSummary bar at top
-- Steps revealed one at a time with "Reveal next step" button (gradient: C.accent to C.accentLight)
-- Each step: numbered circle (30px, 2px border in step colour) + label + brief signpost text + math box
-- Math boxes: background #1e2030, border C.border, math font, centre-aligned. Maths only, no English
-- CRITICAL: each step that involves a graphical insight gets its OWN inline SVG diagram in a split-pane layout (text+math left, compact diagram right). Diagrams progressively annotate as steps reveal. Do NOT use a single persistent side panel
-- Final step: green conclusion box (C.conclBg, C.ok border)
-- Connector lines between steps: 2px wide, C.border colour, 12px tall
+Navigation:
+  - Previous (left): outline style, disabled at step 0
+  - Next (right): gradient C.accent to C.accentLight
+  - Final step: "Complete" button, gradient C.ok to #2ecc71
 
-Step 3 - VERIFY:
-- QuestionSummary bar at top
-- TRY IT callout box explaining what to explore
-- THIS IS THE CENTREPIECE. Build the best possible interactive visual for this question:
-  * Interactive sliders with live-updating graphs
-  * Pulsing dots at key points (intersections, critical values)
-  * Preset buttons for important parameter values
-  * Status panels with coloured borders (green=correct, red=incorrect, yellow=boundary)
-  * Number lines synced with sliders
-  * Side-by-side panels where appropriate (geometry + probability space, original + substituted)
-- Dense dashboard layout: every pixel earns its place, no dead space
-- HINT box at bottom (C.assum border, "HINT" badge)
-- Must fit in ~900px viewport height
+Container: maxWidth 820px, centred, padding 24px 16px
+\`\`\`
 
-Step 4 - ANSWER:
-- QuestionSummary bar at top
-- Question restated in italic quote box
-- Summary grid (verdict cards for key values/steps)
-- "Click each option" prompt
-- Option cards A-H with expand/reveal:
-  * Unexpanded: C.card background, C.accent letter badge
-  * Correct expanded: C.conclBg background, C.ok left border, "CORRECT:" prefix
-  * Incorrect expanded: C.failBg background, C.fail left border, "INCORRECT:" prefix
-  * Staggered animation on step entry (100ms per card)
+STEP PURPOSES (what each step achieves - you decide HOW to lay it out):
 
-NAVIGATION:
-- 5 step buttons at top (Read/Setup/Solve/Verify/Answer), active=C.accent, completed=accent at 15%, future=#1e2030
-- Previous button (left, outline style, disabled at step 0)
-- Next button (right, gradient C.accent->C.accentLight). On final step: "Complete" button with C.ok gradient
+Step 0 - READ: Show the question. Reproduce exact wording from the screenshot. If there's a diagram or geometry, build a proper SVG of it. Show answer options. Don't reveal any working or the answer.
 
-FORMAT DECISION - choose visual type per question:
-- Graph/intersection → Interactive graph with sliders and pulsing dots at intersections
-- Trigonometric equations → Plot f(theta) + substitution parabola, dual-linked sliders
-- Geometric (circles, triangles, sectors) → Accurate SVG geometry, progressive annotation, draggable points in verify
-- Geometric probability → Dual panel (geometry + probability space with draggable point)
-- Optimisation / parameter → Graph with parameter slider + live max/min/difference display + number line
-- Sequences / series → Step function or running total chart with slider for number of terms
-- Graph transformations → Overlay with coefficient comparison, toggle transforms
-- Logic / must-be-true (Paper 2) → Arrow-notation logic checker: [A tick/cross] -> [B tick/cross], green/red/grey arrows
-- Proof analysis / find error → Student proof with step checker + interactive function explorer
-- Counterexample → Fix one variable, drag another to find it
-- Graph matching → Toggle individual functions on/off
-- Family of curves → Slider with ghost curves + envelope
-- Absolute value / modulus → Number line with distance arcs, midpoint boundaries, shaded overlap
-- Comparing equations → 2x2 grid of graphs
-- Binomial / coefficient → Interactive pairing table
+Step 1 - SETUP: Orient the student. What type of problem is this? What's the strategy? If the question has a parameter or visual concept, let the student explore it interactively (slider, toggleable diagram) before seeing the solution. Don't compute anything.
+
+Step 2 - SOLVE: Walk through the solution step by step. Use whatever layout best serves the maths: progressive reveals, split-pane with diagrams, side-by-side algebra, whatever works. The student should see the reasoning unfold naturally.
+
+Step 3 - VERIFY: Let the student check the answer themselves. This should be the most interactive and visually rich step. Build the best possible visual for this question type: sliders, live-updating graphs, pulsing dots, preset buttons, status panels, number lines. Dense dashboard layout.
+
+Step 4 - ANSWER: Reveal and explain the answer. Show option cards that expand to reveal explanations (correct in green, incorrect in red). Summary of key findings.
+
+WITHIN EACH STEP, YOU HAVE COMPLETE CREATIVE FREEDOM ON LAYOUT. Use whatever arrangement best serves the content: side-by-side panels, full-width graphs, stacked cards, grid layouts, split-pane with diagrams. The step purposes above tell you WHAT to achieve, not HOW to lay it out. Choose the layout that makes the maths clearest and the visuals most impressive.
+
+FORMAT DECISION - choose visual approach per question type:
+- Graph/intersection questions: Interactive graph with sliders and pulsing dots at intersections
+- Geometric probability: Dual panel (geometry + probability space)
+- Optimisation: Graph with parameter slider + subplot
+- Algebraic manipulation: Step-through with numbered steps
+- Logic/necessary/sufficient: Interactive tester with truth-value display
+- Find the error: Clickable step checker
+- Family of curves: Slider with ghost curves + envelope
+- Triangle/geometry: Swing arc diagram + condition number line
+- Counterexample: Click-to-reveal evaluation cards
+- Comparing equations: 2x2 grid of graphs
+- Geometric (circles, sectors, triangles): Accurate SVG geometry with progressive annotation, interactive verify with sliders and live measurements
+- Sequences/series: Running total chart, term builder
+- Trigonometric equations: Function plot + substitution parabola, dual-linked views
+- Graph matching: Toggle individual functions on/off
+- Absolute value/modulus: Number line with distance arcs, shaded regions
 
 CRITICAL GRAPH RULES:
-- ALWAYS make viewing windows significantly WIDER than needed. If solutions in [-3, 6], show [-5, 8]. Missing an intersection off-screen is a catastrophic error
-- Before choosing axis ranges, analytically determine ALL solutions first, then set window to contain all with margin
-- Scan range for finding intersections must EXCEED display range. Use 4000+ sample points
-- Labels, counts, status text MUST come from actual computed intersections, NOT a separate formula. If graph shows 2 intersections, label says 2
-- If analytical reasoning disagrees with graph computation, trust the graph and fix reasoning
-- For solution-counting with slider: compute intersections numerically for current value, count live. Never hardcode rules
-- Pulsing dots at key points: <circle cx={x} cy={y} r={5} fill={color}><animate attributeName="r" values="4;7;4" dur="1.5s" repeatCount="indefinite" /></circle>
-- Synced number lines: indicator dot MUST move with slider via same state variable
-- Adaptive scan ranges: for a^x = x with a near 1, use scanMax = max(20, 4/ln(a) + 5)
+- ALWAYS make graph viewing windows significantly WIDER than you think needed. If solutions exist in [-3, 6], show at least [-5, 8]. Missing an intersection because it's off-screen is a serious error.
+- Before choosing axis ranges, analytically determine ALL solutions/intersections first, then set the viewing window to comfortably contain ALL of them with margin.
+- The scan range for finding intersections must EXCEED the display range.
+- For questions comparing solution counts between equations, getting the count wrong because of a narrow viewing window defeats the entire purpose of the visual aid.
+- When in doubt, make the window wider. A slightly zoomed-out graph is always better than one that hides solutions.
+
+CRITICAL ACCURACY RULES:
+- VERIFY YOUR ANSWER MATHEMATICALLY BEFORE BUILDING. Work through the algebra step by step.
+- Labels, counts, and status text MUST be derived from the actual computed intersections/solutions shown in the graph, NOT from a separate analytical formula. If the graph shows 2 intersections, the label must say 2 - never override visual evidence with a formula.
+- If your analytical reasoning disagrees with what the graph computes, trust the graph's numerical computation and fix your reasoning.
+- For solution-counting questions: compute intersections numerically for the current parameter value, count them, and display that count. Do not use a hardcoded rule - compute it live.
+- When including a number line or condition line, ALWAYS show a pulsing dot at the current parameter value that moves as the slider changes.
 
 SVG TECHNICAL RULES:
-- Pixel-margin layout. Fixed margins (mL, mR, mT, mB) accounting for worst-case label widths:
-  const mL=44, mR=24, mT=20, mB=30, pW=400, pH=240;
-  const toSx = (x) => mL + ((x-xMin)/(xMax-xMin))*pW;
-  const toSy = (y) => mT + ((yMax-y)/(yMax-yMin))*pH;
-  Compact (split-pane): pW~220-280, pH~140-180
-- No flatlines: break polyline into segments when curve exits y-range. Never clamp y to yMax/yMin
-- Dynamic y-range: adapt to parameter. Compute amplitude + 15% padding
-- Dashed gridlines at key values. Y-step from [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50]
-- Background rects on all SVG text: fill={C.bg} fillOpacity={0.85}
-- Dynamic text rect widths: textRectW = (str, fs) => str.length * fs * 0.62 + 10
-- No elements outside bounds: clamp all interactive elements within SVG viewBox
-- Graph labels show actual expressions ("y = a^x") not just colour swatches
-- Content-driven viewBox for geometry: compute bounding box from content, add label padding
-- Use 0.01 tolerance for highlight thresholds, not 0.08 or 0.15
+- Pixel-margin layout: use fixed margins (mL, mR, mT, mB) that account for ALL annotations including dynamic labels at worst-case slider values.
+- No SVG flatlines: when a curve exits the visible y-range, break the polyline into segments. Never clamp y values.
+- Dynamic y-range: when amplitude depends on a parameter, adapt the range with 15% padding.
+- Dashed gridlines at key values. Y-grid step from [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50].
+- Background rects on all SVG text labels: fill={C.bg} fillOpacity={0.85}.
+- Dynamic text rect widths: textRectW = (str, fontSize) => str.length * fontSize * 0.62 + 10.
+- No elements outside bounds: clamp all interactive elements within the viewBox.
+- Content-driven viewBox for geometry: compute bounding box from content, add label padding.
+- Use 0.01 tolerance for highlight thresholds, not 0.08 or 0.15.
+- Pulsing animation: <circle cx={x} cy={y} r={5} fill={color}><animate attributeName="r" values="4;7;4" dur="1.5s" repeatCount="indefinite" /></circle>
 
 PEDAGOGY RULES:
-- AS Level maths only (plus modular arithmetic, sequences/series). No further maths. Perpendicular gradients, not dot products
-- Non-calculator exam. Known values fine (sin pi/6 = 0.5). No decimal approximations. Qualitative reasoning for unknowns
-- Degrees vs radians: match the question, never mix
-- Read/Setup show only given info. No computed values on diagrams
-- Setup identifies approach, doesn't compute
-- Solve models the exam sketch method: progressive diagrams like an idealised version of what students draw on paper
-- Think like a tutor, not a markscheme. Teach optimal thinking
-- Verify mirrors exam technique: if exam approach is "try values", verify lets them try values
-- Formal but accessible. Brief signpost, full working in math box. Named theorems go in "Note" boxes, not main labels
-- Never introduce unexplained values in Solve. Use symbolic labels for algebraic derivations, save concrete numbers for Verify
-- For "which statements are true" questions: always show all statements I, II, III in the QuestionSummary
-- For Paper 2 logic: translate in Setup ("A is sufficient for B" = "if A then B", "A only if B" = "if A then B", "A is necessary for B" = "if B then A")
-- When a question involves a substitution (e.g. t = cos^2 theta), show BOTH perspectives: original and substituted. Link them interactively in Verify
+- AS Level maths only (plus modular arithmetic, sequences/series). No further maths content.
+- Non-calculator exam. No reasoning that requires a calculator. Known values fine, approximations not.
+- Degrees vs radians: match whatever the question uses. Never mix.
+- Think like a tutor, not a markscheme. Teach optimal exam thinking.
+- Formal but accessible. No casual language, no slang. Brief signpost, full working visible.
 
-VERIFY YOUR WORK:
-- Before writing code: solve the question yourself, verify answer matches the provided correct answer
-- After writing code mentally: does every step have a visual where one would help? Is the Verify step a polished dashboard or just text? Would a tutor be proud to screen-share this?
-
-Respond with ONLY the React code. Nothing else.`;
+Respond with ONLY the React code inside a single code block. No other text.`;
 
 // ============================================================
 // QUESTION DEFINITIONS
@@ -255,7 +219,7 @@ const questions: Question[] = [
   { year: 2022, paper: 1, qNum: 1,  id: "tmua_2022_p1_q1",  answer: "C", topicTag: "Trigonometric Equations",       screenshotFile: "tmua_2022_p1_q1.png" },
   { year: 2022, paper: 1, qNum: 2,  id: "tmua_2022_p1_q2",  answer: "D", topicTag: "Completing the Square & Inequalities", screenshotFile: "tmua_2022_p1_q2.png" },
   { year: 2022, paper: 1, qNum: 3,  id: "tmua_2022_p1_q3",  answer: "F", topicTag: "Integration & Functions",       screenshotFile: "tmua_2022_p1_q3.png" },
-  { year: 2022, paper: 1, qNum: 4,  id: "tmua_2022_p1_q4",  answer: "C", topicTag: "Circle Sectors",                screenshotFile: "tmua_2022_p1_q4.png" },
+  { year: 2022, paper: 1, qNum: 4,  id: "tmua_2022_p1_q4",  answer: "B", topicTag: "Circle Sectors",                screenshotFile: "tmua_2022_p1_q4.png" },
   { year: 2022, paper: 1, qNum: 5,  id: "tmua_2022_p1_q5",  answer: "H", topicTag: "Sequences",                     screenshotFile: "tmua_2022_p1_q5.png" },
   { year: 2022, paper: 1, qNum: 6,  id: "tmua_2022_p1_q6",  answer: "F", topicTag: "Integration & Logarithms",      screenshotFile: "tmua_2022_p1_q6.png" },
   { year: 2022, paper: 1, qNum: 7,  id: "tmua_2022_p1_q7",  answer: "E", topicTag: "Integration & Modulus",         screenshotFile: "tmua_2022_p1_q7.png" },
@@ -316,7 +280,7 @@ async function generateOne(q: Question, index: number, total: number): Promise<v
 
   const referenceCode = loadBestReference(q.topicTag);
 
-  let textPrompt = `Build a 5-step interactive walkthrough for this TMUA question.
+  let textPrompt = `Build an interactive walkthrough for this TMUA question.
 
 The SCREENSHOT shows the exact question from TMUA ${q.year} Paper ${q.paper}. Read all text, expressions, diagrams, and options from it.
 
@@ -324,8 +288,8 @@ QUESTION: ${q.qNum}  |  PAPER: ${q.paper}  |  YEAR: ${q.year}  |  TOPIC: ${q.top
 
 Before writing code:
 1. Solve the question yourself and confirm answer = ${q.answer}
-2. Check the FORMAT DECISION list for "${q.topicTag}" to pick the right visual type
-3. Plan what interactive elements each step needs (sliders, graphs, animations)
+2. Check the FORMAT DECISION list to pick the right visual approach
+3. Plan the interactive elements
 4. Then build it`;
 
   if (referenceCode) {
@@ -339,10 +303,7 @@ ${referenceCode}
   textPrompt += `\n\nOutput ONLY the React code.`;
 
   const userContent: Anthropic.MessageCreateParams["messages"][0]["content"] = [
-    {
-      type: "image",
-      source: { type: "base64", media_type: "image/png", data: screenshot },
-    },
+    { type: "image", source: { type: "base64", media_type: "image/png", data: screenshot } },
     { type: "text", text: textPrompt },
   ];
 
@@ -356,7 +317,6 @@ ${referenceCode}
 
     let dotCount = 0;
     stream.on("text", () => { dotCount++; if (dotCount % 200 === 0) process.stdout.write("."); });
-
     const response = await stream.finalMessage();
     if (dotCount > 0) process.stdout.write("\n");
 
@@ -376,17 +336,10 @@ ${referenceCode}
     const lineCount = code.split("\n").length;
     console.log(`  Done: ${outPath} (${code.length} chars, ${lineCount} lines)`);
 
-    // Sanity checks
-    if (lineCount < 200) console.warn(`  WARNING: Output seems short (${lineCount} lines). May be incomplete.`);
-    if (lineCount < 350) console.warn(`  NOTE: Under 350 lines - may lack visual richness.`);
+    if (lineCount < 200) console.warn(`  WARNING: Output seems short (${lineCount} lines).`);
     if (!code.includes("export default")) console.warn(`  WARNING: Missing "export default".`);
-    if (!code.includes("step === 0") && !code.includes("step===0") && !code.includes("Read"))
-      console.warn(`  WARNING: May be missing step structure.`);
-    if (code.includes("TARA")) console.warn(`  WARNING: Contains "TARA" - should say "TMUA".`);
     if (!code.includes("<svg") && !code.includes("<circle") && !code.includes("<line"))
-      console.warn(`  WARNING: No SVG elements. May lack visuals.`);
-    if (!code.includes("range"))
-      console.warn(`  NOTE: No range input found. May lack interactivity.`);
+      console.warn(`  WARNING: No SVG elements found.`);
 
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -399,28 +352,21 @@ ${referenceCode}
 // MAIN
 // ============================================================
 async function main() {
-  console.log("=== TMUA Walkthrough Generator v2 ===");
+  console.log("=== TMUA Walkthrough Generator v3 ===");
   console.log(`Output:       ${OUTPUT_DIR}`);
   console.log(`Screenshots:  ${SCREENSHOT_DIR}`);
   console.log(`References:   ${REFERENCE_DIR}`);
 
   if (!fs.existsSync(OUTPUT_DIR)) fs.mkdirSync(OUTPUT_DIR, { recursive: true });
-
-  if (!fs.existsSync(SCREENSHOT_DIR)) {
-    console.error("\nERROR: question-screenshots/ folder not found.");
-    process.exit(1);
-  }
+  if (!fs.existsSync(SCREENSHOT_DIR)) { console.error("\nERROR: question-screenshots/ not found."); process.exit(1); }
 
   if (fs.existsSync(REFERENCE_DIR)) {
-    const refFiles = fs.readdirSync(REFERENCE_DIR).filter(f => f.endsWith(".jsx"));
-    console.log(`References:   ${refFiles.length} files available`);
+    console.log(`References:   ${fs.readdirSync(REFERENCE_DIR).filter(f => f.endsWith(".jsx")).length} files`);
   } else {
-    console.warn("References:   reference-code-tmua/ not found.");
+    console.warn("References:   not found.");
   }
 
-  const availableScreenshots = questions.filter((q) =>
-    fs.existsSync(path.join(SCREENSHOT_DIR, q.screenshotFile))
-  );
+  const availableScreenshots = questions.filter(q => fs.existsSync(path.join(SCREENSHOT_DIR, q.screenshotFile)));
   console.log(`Screenshots:  ${availableScreenshots.length}/${questions.length} available`);
 
   const args = process.argv.slice(2);
@@ -430,19 +376,14 @@ async function main() {
     toGenerate = [];
     for (const arg of args) {
       const a = arg.toLowerCase().replace(/^tmua_?/, "");
-      const match = questions.find((q) => {
+      const match = questions.find(q => {
         const qId = q.id.toLowerCase();
-        const shorthand = `p${q.paper}q${q.qNum}`;
-        const medium = `${q.year}_p${q.paper}_q${q.qNum}`;
-        return qId.includes(a) || a === shorthand || a === medium || (a === `q${q.qNum}` && args.length === 1);
+        return qId.includes(a) || a === `p${q.paper}q${q.qNum}` || a === `${q.year}_p${q.paper}_q${q.qNum}` || (a === `q${q.qNum}` && args.length === 1);
       });
       if (match) toGenerate.push(match);
       else console.warn(`  No match for: "${arg}"`);
     }
-    if (toGenerate.length === 0) {
-      console.error(`\nNo matching questions for: ${args.join(", ")}`);
-      process.exit(1);
-    }
+    if (toGenerate.length === 0) { console.error(`\nNo matching questions for: ${args.join(", ")}`); process.exit(1); }
     console.log(`\nGenerating ${toGenerate.length}: ${toGenerate.map(q => q.id).join(", ")}\n`);
   } else {
     toGenerate = availableScreenshots;
@@ -452,10 +393,7 @@ async function main() {
 
   for (let i = 0; i < toGenerate.length; i++) {
     await generateOne(toGenerate[i], i, toGenerate.length);
-    if (i < toGenerate.length - 1) {
-      console.log("  Waiting 5s...");
-      await new Promise(r => setTimeout(r, 5000));
-    }
+    if (i < toGenerate.length - 1) { console.log("  Waiting 5s..."); await new Promise(r => setTimeout(r, 5000)); }
   }
 
   console.log(`\n=== COMPLETE: ${toGenerate.length} walkthroughs in ${OUTPUT_DIR} ===`);
