@@ -364,12 +364,28 @@ function QuestionSummary() {
 
 ### SolveStep (progressive reveal)
 The `text` field should use JSX (not a plain string) whenever it contains unicode symbols or math expressions. This avoids the `{"\uXXXX"}` inside string literal bug. Use Integral/Sigma in `math` fields when showing integral or sum working.
+
+**Step colour assignment (mandatory).** Each step's `color` property controls the numbered circle, its background tint, and the uppercase label. Assign colours in this order:
+- **First step:** `C.ps` (#74b9ff, blue) — always the opening/identification step
+- **Middle steps:** `C.calc` (#fdcb6e, gold) — for algebraic manipulation, computation, substitution
+- **Final step:** `C.ok` (#55efc4, teal) — always the concluding step that states the answer
+
+For questions with 4+ solve steps, you may add question-specific colours to the `C` object for variety in the middle (e.g. `C.shaded`, `C.step`), but the default middle colour is `C.calc`. The progression should always read **blue → gold/mid → teal**, never two adjacent steps with the same colour. Never use `C.ok`/`C.concl` on any step except the last.
+
+**Paper 2 exception (statement-by-statement logic questions).** When the Solve step analyses multiple statements individually (e.g. "which of these is always true?", proof checking, statement classification), the step colour should reflect the *verdict* on that statement, not its position in the sequence:
+- **Statement proven true / valid:** `C.ok` (#55efc4, teal)
+- **Statement proven false / counterexample found / error identified:** `C.fail` (#ff7675, red)
+- **Setup or preliminary step before a verdict:** `C.ps` (#74b9ff, blue)
+
+This overrides the blue → gold → teal rule for Paper 2 logic questions only. The colour tells the student at a glance which statements survived and which didn't.
+
 ```jsx
 function SolveStep() {
   const [revealed, setRevealed] = useState(0);
   const steps = [
     { label: "STEP NAME", text: <span>Brief signpost with {"\u00D7"} symbol.</span>, math: (<div><Integral lower="0" upper="1" size="small" /> f(x) dx = ...</div>), color: C.ps, graph: "graphType" },
-    // ... more steps. Final step uses color: C.concl
+    { label: "MIDDLE STEP", text: <span>Algebraic working.</span>, math: (<div>...</div>), color: C.calc },
+    { label: "FINAL STEP", text: <span>Conclude.</span>, math: (<div>...</div>), color: C.ok },
     // IMPORTANT: use JSX <span> for text, not "string", when text contains unicode or math
     // IMPORTANT: use Integral/Sigma/EvalBracket in math fields, never plain ∫ or Σ
   ];
