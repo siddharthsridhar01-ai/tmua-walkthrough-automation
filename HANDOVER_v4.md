@@ -371,7 +371,7 @@ function SolveStep() {
     { label: "STEP NAME", text: <span>Brief signpost with {"\u00D7"} symbol.</span>, math: (<div><Integral lower="0" upper="1" size="small" /> f(x) dx = ...</div>), color: C.ps, graph: "graphType" },
     // ... more steps. Final step uses color: C.concl
     // IMPORTANT: use JSX <span> for text, not "string", when text contains unicode or math
-    // IMPORTANT: use Integral/Sigma in math fields, never plain ∫ or Σ
+    // IMPORTANT: use Integral/Sigma/EvalBracket in math fields, never plain ∫ or Σ
   ];
   return (
     <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "22px 24px", marginBottom: 18 }}>
@@ -515,15 +515,15 @@ For any "if A then B" / "only if" / "sufficient/necessary" statement:
 - Arrow green when consistent, red when violated, grey when vacuously true
 - Include explanation text below
 
-### Integral and Summation Notation — MANDATORY
-**NEVER use a bare ∫ or Σ character.** They cannot show limits and look broken. Use these components instead:
+### Integral, Summation, and Evaluation Bracket Notation — MANDATORY
+**NEVER use a bare ∫ or Σ character.** They cannot show limits and look broken. Use these tested components:
 
 ```jsx
 function Integral({ lower, upper }) {
   return (
     <span style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", verticalAlign: "middle", margin: "0 4px", lineHeight: 1 }}>
-      <span style={{ fontSize: 13, fontFamily: "serif", color: C.white }}>{upper}</span>
-      <span style={{ fontSize: 30, fontFamily: "serif", color: C.white, transform: "scaleY(0.7)", marginTop: -4, marginBottom: -2 }}>{"\u222B"}</span>
+      <span style={{ fontSize: 13, fontFamily: "serif", color: C.white, paddingBottom: 4 }}>{upper}</span>
+      <span style={{ fontSize: 30, fontFamily: "serif", color: C.white, transform: "scaleY(0.7)" }}>{"\u222B"}</span>
       <span style={{ fontSize: 13, fontFamily: "serif", color: C.white }}>{lower}</span>
     </span>
   );
@@ -532,18 +532,39 @@ function Integral({ lower, upper }) {
 function Sigma({ lower, upper }) {
   return (
     <span style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", verticalAlign: "middle", margin: "0 4px", lineHeight: 1 }}>
-      <span style={{ fontSize: 13, fontFamily: "serif", color: C.white }}>{upper}</span>
-      <span style={{ fontSize: 26, fontFamily: "serif", color: C.white, transform: "scaleY(0.8)", marginTop: -3, marginBottom: -1 }}>{"\u03A3"}</span>
+      <span style={{ fontSize: 13, fontFamily: "serif", color: C.white, paddingBottom: 3 }}>{upper}</span>
+      <span style={{ fontSize: 26, fontFamily: "serif", color: C.white, transform: "scaleY(0.8)" }}>{"\u03A3"}</span>
       <span style={{ fontSize: 13, fontFamily: "serif", color: C.white }}>{lower}</span>
     </span>
   );
 }
+
+function EvalBracket({ lower, upper, children }) {
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", verticalAlign: "middle" }}>
+      <span style={{ fontSize: 22, fontFamily: "serif", color: C.white, fontWeight: 300 }}>[</span>
+      <span style={{ fontFamily: "serif", color: C.white }}>{children}</span>
+      <span style={{ fontSize: 22, fontFamily: "serif", color: C.white, fontWeight: 300 }}>]</span>
+      <span style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", verticalAlign: "middle", margin: "0 2px", lineHeight: 1, gap: 6 }}>
+        <span style={{ fontSize: 11, fontFamily: "serif", color: C.white }}>{upper}</span>
+        <span style={{ fontSize: 11, fontFamily: "serif", color: C.white }}>{lower}</span>
+      </span>
+    </span>
+  );
+}
 ```
-Usage everywhere (Read step, QuestionSummary, Solve math boxes):
+Usage:
 ```jsx
-<p>...and <Integral lower="0" upper="1" /> f(x) dx = 1, find...</p>
+// Integral with limits:
+<Integral lower="0" upper="1" /> f(x) dx = 1
+
+// Evaluated integral with bracket notation:
+<Integral lower="0" upper="2" /> x dx = <EvalBracket lower="0" upper="2">x<sup>2</sup>/2</EvalBracket> = 2
+
+// Summation:
+<Sigma lower="n=1" upper="100" /> log(3<sup>1-n</sup>)
 ```
-The key trick is `transform: scaleY(0.7)` which squashes the tall integral glyph to a proportional size, with negative margin to tighten the gaps. Define these at the top of the component file whenever the question involves integrals or sums.
+Key details: `Integral` uses `scaleY(0.7)` and `paddingBottom: 4` on upper limit. `Sigma` uses `scaleY(0.8)` and `paddingBottom: 3`. `EvalBracket` uses `gap: 6` between stacked limits. All three use `lineHeight: 1` to isolate from parent line-height. Limits use slash fractions (e.g. "π/6" not stacked) to match exam style and stay legible at small sizes. Define these at the top of any walkthrough that uses integrals, sums, or evaluated expressions.
 
 ---
 

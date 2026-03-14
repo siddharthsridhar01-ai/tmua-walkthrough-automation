@@ -44,6 +44,8 @@ You will receive:
 1. A SCREENSHOT of the actual question from the exam paper. This is the ground truth.
 2. A HANDOVER DOCUMENT: the complete design system, pedagogy principles, component patterns (with code), and rules built up over multiple sessions. This is the authoritative specification. Follow every rule in it. Use the exact code patterns provided.
 
+CRITICAL BUG PREVENTION: If the question contains an integral or summation, you MUST define and use the Integral/Sigma components from the handover (HTML flexbox version). NEVER write a bare \\u222B or \\u03A3 character — it renders with broken limits every time.
+
 === HANDOVER DOCUMENT ===
 ${handover}
 === END HANDOVER DOCUMENT ===
