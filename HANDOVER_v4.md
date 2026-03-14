@@ -8,8 +8,6 @@ The walkthroughs follow a consistent 5-step pattern. Each question is a single s
 
 ---
 
----
-
 ## Design System & Style Rules
 
 ### Color Constants (use this exact `C` object)
@@ -44,7 +42,8 @@ const C = {
 - **NEVER** use `{"\uXXXX"}` inside a JS string literal - this breaks the string
 - **NO bold/strong on variables** in question text. Do not wrap x, y, p, n, etc. in `<strong>` or `<b>`. Variables should be in math font at normal weight, not bold. Bold is only for structural labels like "CORRECT:" or badge text, never for mathematical content.
 - **Consistent styling across ALL questions.** Question text is always fontSize 15.5, lineHeight 2, color C.text. Option cards always use the exact OptionCard pattern from Component Patterns. QuestionSummary always uses fontSize 13 with all options on one row. The header, step nav, step title, and navigation buttons are identical every time — use the App Shell pattern exactly. Do not improvise new styles per question.
-- **ZERO blackspace.** No large empty dark areas inside any card or panel. Cards should shrink-wrap their content. Arrange visuals and status cards to fill available space with no dead zones.
+- **ZERO blackspace.** The border of every card must tightly enclose its content with no empty dark space inside. If a card contains a diagram, the diagram must fill the card. Never have a card border that extends beyond the visual content inside it.
+- **All text in diagrams must be fully visible.** No label, axis number, or annotation should be cropped, clipped, or cut off by the SVG boundary. If a label doesn't fit, increase the viewBox dimensions or margins to accommodate it. Test mentally at extreme slider values where labels are longest.
 
 ---
 
@@ -76,7 +75,7 @@ This gives 2 rows of 4 for 8 options, or 2 rows of 3+3/4+2 for 6-7 options, all 
 - **Question refresher** at top
 - Identify what type of problem this is and where to start
 - Show a general picture of the configuration (no computed values on diagrams)
-- Use `general` prop on diagram components to show schematic versions
+- Show schematic versions of diagrams: dashed outlines, symbolic labels, arrows indicating degrees of freedom
 - STRATEGY or KEY INSIGHT callout box
 - Do NOT compute anything - just outline the approach
 
@@ -118,7 +117,7 @@ This gives 2 rows of 4 for 8 options, or 2 rows of 3+3/4+2 for 6-7 options, all 
 
 4. **Formal but accessible** - This is a premium product. No casual language, no slang. But also not a wall of text. Brief signpost, full working in math box. Named theorems/principles should go in "Note" boxes, not be the main method label (e.g. "Count safe picks" not "Apply the pigeonhole principle").
 
-5. **Read/Setup show only given info** - Diagrams in Steps 0-1 should only annotate what the question explicitly states. No computed values. Use `general` mode on diagram components: dashed outlines, symbolic labels ("k" not "1"), arrows indicating degrees of freedom.
+5. **Read/Setup show only given info** - Diagrams in Steps 0-1 should only annotate what the question explicitly states. No computed values. Show schematic versions: dashed outlines, symbolic labels ("k" not "1"), arrows indicating degrees of freedom.
 
 6. **Setup identifies approach, doesn't compute** - Setup should explain WHAT to do, not DO it.
 
@@ -130,13 +129,13 @@ This gives 2 rows of 4 for 8 options, or 2 rows of 3+3/4+2 for 6-7 options, all 
 
 10. **Arrow-notation logic for Paper 2** - For "only if", "necessary/sufficient", and implication questions, display statements as explicit logic chains: [A tick/cross] -> [B tick/cross] with live truth-value colouring. Green arrow when consistent, red when violated (A true, B false), grey when vacuously true (A false). Include explanation: "Left side is false, so implication holds vacuously (not a useful test)".
 
-11. **Single-viewport verify - PRIMARY LAYOUT GOAL** - The Verify step MUST fit in a single browser viewport (~900px height) without scrolling. The student should see the slider/controls, all diagrams, and status values simultaneously. This is the most important layout constraint and overrides diagram size preferences. To achieve this: use compact but readable diagram sizes (not oversized), place elements efficiently (side-by-side when both fit at 380px+, stacked only when necessary), keep status cards small and dense, and avoid excessive padding. If the verify has two diagrams, they should sit side by side or use a compact stacked layout, not two full-height diagrams that push the page to 1500px. Think of it as designing a dashboard, not a scrolling document.
+11. **Single-viewport verify - PRIMARY LAYOUT GOAL** - The Verify step MUST fit in a single browser viewport (~900px height) without scrolling. The student should see the slider/controls, all diagrams, and status values simultaneously. This overrides all other layout preferences. Think of it as designing a dashboard, not a scrolling document.
 
 12. **Never introduce unexplained values in Solve** - Solve diagrams that use concrete numbers must justify them (e.g. "Let x=2, y=4, z=1 satisfying x^2=yz"). Better: use `general` mode with symbolic labels throughout solve whenever the derivation is purely algebraic. Save specific numbers for the Verify step where sliders provide context.
 
 13. **Always show statements I, II, III in the QuestionSummary** - For any "which statements are true" question, write out all statements explicitly in the refresher bar so the student can always see what I/II/III say without scrolling back.
 
-14. **Solve diagrams: one per step, not a single persistent panel** - Each reveal step should have its own inline diagram (split-pane: text+math left, diagram right) that stays visible as new steps appear. Do NOT put one diagram in a side panel that updates with each step. This follows the Q13 pattern: `graphForStep(s.graph)` renders a different diagram for each step.
+14. **Solve diagrams: one per step, not a single persistent panel** - Each reveal step should have its own inline diagram (split-pane: text+math left, diagram right) that stays visible as new steps appear. Do NOT put one diagram in a side panel that updates with each step.
 
 15. **Translate logic language in Setup** - For Paper 2 questions, always translate: "A is sufficient for B" = "if A then B"; "A only if B" = "if A then B"; "A is necessary for B" = "if B then A"; converse = swap; contrapositive = negate and swap. Show these translations explicitly before solving.
 
@@ -144,7 +143,7 @@ This gives 2 rows of 4 for 8 options, or 2 rows of 3+3/4+2 for 6-7 options, all 
 
 16. **Pixel-margin layout for SVGs** - NEVER compute SVG viewBox dimensions from geometry alone. Use fixed pixel margins (mL, mR, mT, mB) that account for ALL annotations including dynamic labels that change with slider values. The plot area lives inside these margins. Compute margin sizes by considering the WORST CASE: what is the longest label text at extreme slider values? For number lines, the indicator label "p = -3.5" needs more right margin than "p = 1". Use mR = max_possible_label_width + 12px buffer. If a label would extend beyond the viewBox at any slider position, the margins are wrong.
 
-17. **Dynamic text background rectangles** - Never hardcode `<rect>` widths for text labels. Use a helper: `textRectW = (str, fontSize) => str.length * fontSize * 0.65 + padding`. Every text label in SVG should have a background rect sized by this formula.
+17. **Dynamic text background rectangles** - Never hardcode `<rect>` widths for text labels in SVGs. Size background rects dynamically based on the text content length and font size so they always fit the label.
 
 18. **No SVG flatlines** - When a curve exits the visible y-range, SKIP the point (break the polyline into segments). Never clamp y values to yMax/yMin, as this creates ugly horizontal plateaus at the edges. Use the `buildSegments` helper pattern:
 ```js
@@ -168,11 +167,11 @@ const buildSegments = (evalFn) => {
 
 19. **Dynamic y-range for function graphs** - When the curve amplitude depends on a parameter (e.g. p^2 sin x), the y-range MUST adapt. Compute the actual amplitude from the parameter and add 15% padding. Never use a fixed y-range like [-0.5, 0.5] when the curve could go outside it.
 
-20. **Strict correctness checks — use analytical values, not numerical approximations** - Define `const TOL = 0.01;` at the top of every verify component. But more importantly: when checking whether the answer is correct at a preset/answer value, compute the check using the EXACT ANALYTICAL formula, not a numerical approximation. For example, if the integral of (a/2)x^2 + bx + c from 0 to 1 should equal 1, compute it as `a/6 + b/2 + c` (the exact antiderivative evaluated), NOT as a Riemann sum that gives 0.992. Numerical methods are for plotting curves, not for checking correctness. The `allCorrect` flag should use exact formulas so it is precisely true at the answer value and precisely false everywhere else. See the Verify Layout code pattern for the full structure.
+20. **Strict correctness checks — use analytical values, not numerical approximations** - Define `const TOL = 0.01;` at the top of every verify component. But more importantly: when checking whether the answer is correct at a preset/answer value, compute the check using the EXACT ANALYTICAL formula, not a numerical approximation. For example, if the integral of (a/2)x^2 + bx + c from 0 to 1 should equal 1, compute it as `a/6 + b/2 + c` (the exact antiderivative evaluated), NOT as a Riemann sum that gives 0.992. Numerical methods are for plotting curves, not for checking correctness. The `allCorrect` flag should use exact formulas so it is precisely true at the answer value and precisely false everywhere else.
 
 21. **Adaptive scan ranges for numerical methods** - When counting intersections or finding roots numerically, scale the scan range with the problem parameters. E.g. for a^x = x with a close to 1, intersections can be at x ~ 4/ln(a), which is very large. Use `scanMax = max(20, 4/ln(a) + 5)` with high resolution (4000+ points).
 
-22. **Content-driven viewBox for geometric diagrams** - For diagrams with circles, polygons, etc: compute bounding box from actual geometric content, add padding in math-space for labels, then derive viewBox. This prevents cropping. See Q13 TwoCirclesDiagram for the pattern.
+22. **Content-driven viewBox for geometric diagrams** - For diagrams with circles, polygons, etc: compute bounding box from actual geometric content, add padding in math-space for labels, then derive viewBox. This prevents cropping.
 
 23. **Dashed gridlines and proper axis labels** - Function graphs should have dashed horizontal gridlines at key y-values, dashed vertical gridlines at key x-values (pi, 2pi, integers), axis labels in the margins. The grid makes scale immediately legible. Y-grid step should be adaptive: pick from [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50].
 
@@ -188,21 +187,25 @@ const buildSegments = (evalFn) => {
 
 29. **Readable but compact diagram sizes** - Every diagram must be readable without squinting, BUT must also fit within the single-viewport constraint (principle 11). Minimum readable sizes: plot area pW ~300, pH ~170, SVG font 9px+, axis labels 8px+. These are floors, not targets. Diagrams can and should grow larger to fill their container and eliminate dead space. For Verify with multiple diagrams, use the smaller end so everything fits in one viewport. For Solve split-pane, compact diagrams at pW ~280, pH ~160 are fine as long as text is 9px+.
 
-30. **Multiple complementary diagrams** - When a question involves a substitution or transformation (e.g. letting u = cos^2 theta to reduce to a quadratic), show BOTH perspectives: the original equation's graph AND the substituted variable's graph. In the Verify step, link them interactively: as the student drags theta, highlight the corresponding u value on the quadratic parabola and the f(theta) value on the original curve. This makes the connection between the substitution and the original equation visible. More generally, if there are two natural ways to visualise a problem (e.g. number line and algebraic, or geometric and coordinate), show both rather than picking one.
+30. **Multiple complementary diagrams when appropriate** - When a question involves a substitution or transformation (e.g. letting u = cos^2 theta to reduce to a quadratic), consider showing both perspectives: the original equation's graph and the substituted variable's graph, linked interactively. More generally, if there are two natural ways to visualise a problem, showing both can be powerful. But only add a second diagram if it genuinely helps the student understand - don't force dual visuals on questions where one diagram is sufficient.
 
 31. **No elements outside bounds** - Interactive elements (draggable points, sliders, markers, dots) must NEVER visually escape their containing SVG or diagram. Clamp all positions to stay within the plot area. For number lines, the indicator dot must stay within the line endpoints. For circle/geometry diagrams, labels and points must stay within the viewBox. Test boundary values mentally: what happens at the min and max of every slider? If an element would go off-screen, clamp it.
 
-32. **Verify layout is flexible, dense, and fits one viewport** - Choose whatever layout best fills the space for each question. The only hard constraints are: fits in ~900px height (principle 11), maxWidth 820px, no large empty dark areas, and `alignItems: "flex-start"` on any flex row with side-by-side panels. Size diagrams to fill their containers using `width="100%"` with a `viewBox` rather than fixed pixel widths.
+32. **Card borders must tightly enclose content** - Every bordered card must hug its content with no empty dark space between the content edge and the card border. Layout is flexible (any arrangement that fits one viewport), but this tight-wrapping rule is absolute.
 
-GOOD example (Q4 sectors verify): Two sector diagrams side by side, status cards in a tight 4-column grid row below, perimeter formulas in a 2-column row below that. Fluid multi-row layout, every row packed.
+BAD: A card with a 400px-wide graph inside an 820px-wide bordered div. The right 420px is empty dark space inside the border.
 
-GOOD example (Q3 integral verify): Graph in one column, status cards stacked in the other column matching the graph height through content.
-
-BAD example: A graph in a full-width card that only fills 60% of the width with dead space beside it. Or a small number line stretched to match a taller neighbour with 300px of empty padding.
+GOOD: The graph SVG uses `width="100%"` so it fills the card. Or the card uses `width: "fit-content"` so the border shrinks to the graph.
 
 33. **Show formulas being applied, not just results** - In Solve steps and Verify status cards, show the formula and the substitution, not just the final number. E.g. for a sector perimeter, show "Perimeter = 2r + arc = 2(9) + 6 = 24" not just "24". For area difference, show "Area = (1/2)r^2 theta" then the subtraction. The student needs to see WHERE the number comes from. In Verify, status cards can show the formula label (e.g. "2r + arc") and the computed value. This is a tutoring product: the working is the point.
 
 34. **Use shared labels to show relationships visually** - When the question states a relationship between objects (similar, congruent, equal angles, parallel), make it visually obvious through shared labels and annotations. E.g. if two sectors are similar, label BOTH with the same angle theta to show they share it. If two triangles share a side, label it with the same variable on both. If gradients are perpendicular, annotate both with their gradient values. The diagram should communicate the relationship at a glance without the student needing to read the text.
+
+35. **Slider range and presets must be pedagogically relevant** - The slider range should cover the mathematically meaningful domain for the question, not an arbitrary range. Presets should include: the correct answer value, one or two boundary/edge-case values where behaviour changes, and at least one clearly wrong value to show contrast. The student should be able to see WHY the answer is correct by comparing what happens at the answer preset vs the wrong presets. For example, if the answer is r = 9 and the condition is "area difference = 21", include presets like r = 3 (too small, area diff way off), r = 9 (answer, area diff = 21), and r = 12 (too big, area diff overshoots). The presets tell a story.
+
+36. **Every diagram must serve a pedagogical purpose** - Don't add a visual just to have a visual. If the question is purely algebraic (e.g. computing a recurrence relation, solving an equation for a parameter), a verify with just sliders, status cards, and computed values can be more effective than forcing a graph. Ask: "would a student sketch this in the exam?" If not, a diagram probably doesn't belong. It's fine to have a verify step with no diagram at all if the interactive sliders and status cards are sufficient.
+
+37. **Geometric shapes must be drawn correctly** - Sectors must show proper circular arcs (not triangles), circles must be circular, angles must be visually accurate. If the exam paper shows two sectors with arcs and radii labelled, the walkthrough must show the same. Use SVG `arc` commands for curved edges. Shapes should be large enough to see clearly and match the proportions in the original question.
 
 ---
 
@@ -352,70 +355,33 @@ function SolveStep() {
 ```
 
 ### Verify Step Components
-The verify step must fit in one viewport (~900px) without scrolling. Pack the components below into whatever spatial arrangement best eliminates dead space for the specific question. You choose the layout (side-by-side columns, fluid rows, grid, etc.) — the only constraints are: no blackspace, everything visible without scrolling, and every component below must appear.
+The verify step must fit in one viewport (~900px) without scrolling. You choose the layout freely. The only hard rules are: controls at the top, hint at the bottom, everything visible without scrolling, and every card border tightly encloses its content (no empty space inside any bordered card).
 
-**MANDATORY: TOL and correctness checks at the top of the verify component.**
+**MANDATORY: TOL and correctness checks.**
 ```jsx
-function VerifyExplorer() {
-  const [param, setParam] = useState(defaultValue);
-  
-  const TOL = 0.01;
-  const check1 = Math.abs(computedValue1 - target1) < TOL;
-  const check2 = Math.abs(computedValue2 - target2) < TOL;
-  const allCorrect = check1 && check2;
-  // Use allCorrect for: success banner, green borders on status cards
-  // Use individual checks (check1, check2) for per-card highlights
-  // NEVER use a different tolerance anywhere else in this component
+const TOL = 0.01;
+const check1 = Math.abs(computedValue1 - target1) < TOL;
+const check2 = Math.abs(computedValue2 - target2) < TOL;
+const allCorrect = check1 && check2;
+// Use allCorrect for: success banner, green borders on status cards
+// NEVER use a different tolerance anywhere else in this component
 ```
 
-**Component 1: Controls card (slider + preset buttons).** Always appears at the top.
-```jsx
-<div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 20px", marginBottom: 14 }}>
-  <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 10 }}>
-    <input type="range" ... style={{ flex: 1, accentColor: C.accent, height: 6 }} />
-    <span style={{ minWidth: 80, fontSize: 16, fontWeight: 700, color: C.curve1, fontFamily: mathFont }}>label = value</span>
-  </div>
-  <div style={{ display: "flex", gap: 6 }}>
-    <button style={{ flex: 1, padding: "8px 4px", borderRadius: 8, border: `1px solid ${Math.abs(param - presetVal) < TOL ? C.ok : C.border}`, background: Math.abs(param - presetVal) < TOL ? C.ok + "15" : C.card, color: Math.abs(param - presetVal) < TOL ? C.ok : C.muted, fontSize: 11, cursor: "pointer" }}>preset</button>
-  </div>
-</div>
-```
+**Style reference — use these exact styles for each element type, but arrange them however you want:**
 
-**Component 2: Diagram(s).** Graph, SVG, number line, circle preview, etc. Use the styling from the C object and mathFont. No specific layout prescribed - place wherever best fills the space.
+Slider: `accentColor: C.accent, height: 6`. Value label: `fontSize: 16, fontWeight: 700, fontFamily: mathFont`.
 
-**Component 3: Status cards.** Use `check1`, `check2` etc. for individual card borders.
-```jsx
-<div style={{ background: C.card, border: `1px solid ${check1 ? C.ok + "66" : C.border}`, borderRadius: 12, padding: "12px 14px", textAlign: "center" }}>
-  <div style={{ fontSize: 10, color: C.muted, fontWeight: 700, marginBottom: 4, textTransform: "uppercase" }}>Label</div>
-  <div style={{ fontSize: 20, fontWeight: 700, color: check1 ? C.ok : C.white, fontFamily: mathFont }}>value</div>
-  {check1 && <div style={{ fontSize: 10, color: C.ok }}>Target: X {"\u2713"}</div>}
-</div>
-```
+Preset buttons: `borderRadius: 8, fontSize: 11`. Active state: `border: 1px solid ${C.ok}, background: ${C.ok}15, color: ${C.ok}`. Inactive: `border: 1px solid ${C.border}, color: ${C.muted}`.
 
-**Component 4: Success banner.** ONLY renders when `allCorrect` is true.
-```jsx
-{allCorrect && (
-  <div style={{ background: C.conclBg, border: `1px solid ${C.ok}44`, borderRadius: 12, padding: "12px 16px", textAlign: "center" }}>
-    <span style={{ fontSize: 14, fontWeight: 700, color: C.ok }}>All conditions satisfied!</span>
-  </div>
-)}
-```
+Status cards: `background: C.card, borderRadius: 12, padding: "12px 14px", textAlign: "center"`. Label: `fontSize: 10, color: C.muted, fontWeight: 700, textTransform: "uppercase"`. Value: `fontSize: 20, fontWeight: 700, fontFamily: mathFont`. Border highlights with `check ? C.ok + "66" : C.border`.
 
-**Component 5: Hint box.** Always appears at the bottom.
-```jsx
-<div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "12px 18px" }}>
-  <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-    <span style={{ background: C.assumBg, border: `1px solid ${C.assum}`, borderRadius: 6, padding: "4px 10px", fontSize: 12, color: C.assum, fontWeight: 700, whiteSpace: "nowrap" }}>HINT</span>
-    <p style={{ color: C.muted, fontSize: 13, lineHeight: 1.6, margin: 0 }}>Hint text.</p>
-  </div>
-</div>
-```
+Success banner (ONLY when `allCorrect`): `background: C.conclBg, border: 1px solid ${C.ok}44, borderRadius: 12, textAlign: "center"`. Text: `fontSize: 14, fontWeight: 700, color: C.ok`.
 
-**Arrangement rules:**
-- Controls card always first, hint box always last
-- Components 2, 3, and 4 go in between — arrange them however best fills the space with no dead areas
-- All content must stay within maxWidth 820px
-- Use `alignItems: "flex-start"` on any flex row with side-by-side panels
+Hint box: `background: C.card, border: 1px solid ${C.border}, borderRadius: 14, padding: "12px 18px"`. Badge: `background: C.assumBg, border: 1px solid ${C.assum}, borderRadius: 6, padding: "4px 10px", fontSize: 12, color: C.assum, fontWeight: 700`. Text: `color: C.muted, fontSize: 13, lineHeight: 1.6`.
+
+Diagram cards: SVGs must use `width="100%"` with a `viewBox` so they fill their container. The card border must tightly wrap the SVG with no empty space. Use `style={{ display: "block" }}` on the SVG to eliminate inline gaps.
+
+General card wrapper: `background: C.card, border: 1px solid ${C.border}, borderRadius: 14`. Padding as needed for content, not for empty space.
 
 ### OptionCard
 ```jsx
