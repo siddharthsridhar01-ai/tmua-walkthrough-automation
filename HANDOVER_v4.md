@@ -8,57 +8,6 @@ The walkthroughs follow a consistent 5-step pattern. Each question is a single s
 
 ---
 
-## Files Produced
-
-### TMUA 2022 Paper 1:
-| Question | File | Topic | Key Feature |
-|----------|------|-------|-------------|
-| Q6 | `tmua_2022_p1_q6.jsx` | Integration & Logarithms | Area under y=x graph, SVG integral notation, difference of squares trick |
-| Q8 | `tmua_2022_p1_q8.jsx` | Geometric Series | Light verify table (no sliders), k=r^20 in power notation |
-| Q10 | `tmua_2022_p1_q10.jsx` | Graph Transformations | Curve overlay with coefficient comparison panel, translation sliders |
-| Q11 | `tmua_2022_p1_q11.jsx` | Logarithms & Series | Partial sum builder, n(n+1)/2 formula breakdown, running total chart |
-| Q12 | `tmua_2022_p1_q12.jsx` | Quadratics & Optimisation | Family of parabolas, smooth slider, locus of vertices, toggle background curves |
-| Q13 | `tmua_2022_p1_q13.jsx` | Circle Geometry (two circles) | Content-driven viewBox, max PQ with collinear alignment, drag P and Q independently |
-| Q14 | `tmua_2022_p1_q14.jsx` | Circle Geometry (triangle) | Drag R around circle, progressive diagram annotation in solve, SVG angle arcs |
-| Q15 | `tmua_2022_p1_q15.jsx` | Exponentials (a^cos x) | Pixel-margin graph layout, dashed gridlines, slider for a with live max/min/difference |
-| Q16 | `tmua_2022_p1_q16.jsx` | Coordinate Geometry | Right-angle triangle, perpendicular gradients (not dot product), general mode for Read/Setup |
-| Q17 | `tmua_2022_p1_q17.jsx` | Circles and Series | Nested circles with alternating shading, pair-by-pair area breakdown table |
-| Q19 | `tmua_2022_p1_q19.jsx` | Geometric Reasoning (polygon) | Polygon inscribed in circle, toggle regular vs counterexample, degrees throughout |
-
-### TMUA 2022 Paper 2:
-| Question | File | Topic | Key Feature |
-|----------|------|-------|-------------|
-| Q2 | `tmua_2022_p2_q2.jsx` | Binomial Expansion | SVG summation notation, interactive coefficient pairing table, 2^n insight |
-| Q5 | `tmua_2022_p2_q5.jsx` | Logic (P, converse, contrapositive) | Line through (1,2) with gradient slider, arrow-notation logic checker for all 3 statements |
-| Q8 | `tmua_2022_p2_q8.jsx` | Pigeonhole / Combinatorics | Clickable pair grid, "select max safe" button, live pair completion detection |
-| Q9 | `tmua_2022_p2_q9.jsx` | Logic & Inequalities | Number line verify (fix k, drag x to find counterexample), no graph needed |
-| Q11 | `tmua_2022_p2_q11.jsx` | Kite Geometry (right angle) | SVG kite diagram, general mode for solve, Pythagoras on perpendicular diagonals, slider verify |
-| Q14 | `tmua_2022_p2_q14.jsx` | Absolute Value Inequalities | Distance arcs on number line, midpoint boundaries, shaded overlap region |
-| Q16 | `tmua_2022_p2_q16.jsx` | Sequences & Inequalities (min/max) | Preset example selector, colour-coded sequence table, statement truth-value cards |
-| Q17 | `tmua_2022_p2_q17.jsx` | Proof Analysis (cubic roots) | Student proof with error identification, implication direction, interactive cubic explorer |
-| Q18 | `tmua_2022_p2_q18.jsx` | Graph Matching (trig powers) | Toggle individual functions, endpoint analysis, symmetry argument (no calculator) |
-| Q20 | `tmua_2022_p2_q20.jsx` | Functions & Trigonometry | Nested sin/cos, toggle individual functions, domain/range panel |
-
-### TMUA 2023 Paper 2:
-| Question | File | Topic | Key Feature |
-|----------|------|-------|-------------|
-| Q6 | `tmua_2023_p2_q6.jsx` | Equations & Transformations | 2x2 intersection graph grid, adaptive scan range for small a, reversibility analysis |
-| Q8 | `tmua_2023_p2_q8.jsx` | Triangle Geometry (dividing lines) | Automatic altitude + angle-split line computation, preset triangle selector, line toggles |
-| Q10 | `tmua_2023_p2_q10.jsx` | Proof Checking (completing square) | Line-by-line verification grid, x-slider shows all expressions agree, line IV trap explanation |
-| Q11 | `tmua_2023_p2_q11.jsx` | Logic & Equivalence (Fermat primes) | Converse/inverse/contrapositive classification, k-value selector, arrow-notation checker |
-| Q12 | `tmua_2023_p2_q12.jsx` | Trigonometry & Logic | Factored trig equation, n-by-p classification, dynamic y-range graph, arrow-notation for sufficient/only-if |
-| Q17 | `tmua_2023_p2_q17.jsx` | Ceiling Function Integral | Step function graph, doubling rectangles, geometric series with superscript helper |
-| Q20 | `tmua_2023_p2_q20.jsx` | Integration & Logic (f(|x|)) | Dual graphs (f vs f(|x|), integrand with shading), arrow-notation logic checker |
-
-### Not yet done from 2022 Paper 1:
-Q1, Q2, Q3, Q4, Q5, Q7, Q9
-
-### Not yet done from 2022 Paper 2:
-Q1, Q3-Q7, Q10, Q12, Q13, Q15, Q19
-
-### Not yet done from 2023 Paper 2:
-Q1-Q5, Q7, Q9, Q13-Q16, Q18-Q19
-
 ---
 
 ## Design System & Style Rules
@@ -95,14 +44,7 @@ const C = {
 - **NEVER** use `{"\uXXXX"}` inside a JS string literal - this breaks the string
 - **NO bold/strong on variables** in question text. Do not wrap x, y, p, n, etc. in `<strong>` or `<b>`. Variables should be in math font at normal weight, not bold. Bold is only for structural labels like "CORRECT:" or badge text, never for mathematical content.
 - **Consistent styling across ALL questions.** Question text is always fontSize 15.5, lineHeight 2, color C.text. Option cards always use the exact OptionCard pattern from Component Patterns. QuestionSummary always uses fontSize 13 with all options on one row. The header, step nav, step title, and navigation buttons are identical every time — use the App Shell pattern exactly. Do not improvise new styles per question.
-- **ZERO blackspace.** Every card and panel must be filled with content. Large empty dark areas inside cards look unprofessional. Choose whichever layout best eliminates dead space for the specific question. Strategies (use any combination):
-
-  1. **Fluid multi-row layout.** Two diagrams side by side in one row, status cards in a dense grid row below, formula breakdowns in another row below that. Each row is full-width and tightly packed. This works well when you have two similarly-sized visuals (e.g. two sectors, two graphs).
-  2. **Two-column layout.** Main diagram in one column, status cards and formulas stacked in the other column. Works when you have one diagram and several supporting cards.
-  3. **Flex diagram dimensions.** Size diagrams to fill their container. Use `width="100%"` with a viewBox on SVGs. Make number lines taller (thicker track, larger labels, more vertical room for annotations). Don't leave a small diagram floating in a large card.
-  4. **Use `alignItems: "flex-start"`** on any flex row with side-by-side panels so cards shrink-wrap their content rather than stretching to match a taller neighbour.
-
-  The goal is a dense dashboard feel with no visible empty dark areas. The layout should be fluid and content-driven, not rigidly templated.
+- **ZERO blackspace.** No large empty dark areas inside any card or panel. Cards should shrink-wrap their content. Arrange visuals and status cards to fill available space with no dead zones.
 
 ---
 
@@ -242,49 +184,25 @@ const buildSegments = (evalFn) => {
 
 27. **Consistent diagram proportions** - When showing multiple diagram variants (e.g. acute vs obtuse triangle), keep the overall bounding box proportions similar so they look consistent when placed side-by-side or in successive solve steps. A 150x90 bbox next to a 30x130 bbox looks jarring.
 
-28. **SVG summation notation** - Use inline SVG for proper summation symbols with limits above/below, following the integral notation pattern:
-```jsx
-function Sigma({ lower, upper, size }) {
-  const s = size || "normal";
-  const w = s === "small" ? 28 : 38;
-  const h = s === "small" ? 36 : 48;
-  const sigmaSize = s === "small" ? 22 : 30;
-  const limSize = s === "small" ? 8 : 10;
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} width={w} height={h}
-      style={{ display: "inline-block", verticalAlign: "middle" }}>
-      <text x={w/2} y={limSize+1} fill={C.muted} fontSize={limSize}
-        textAnchor="middle" fontFamily={mathFont}>{upper}</text>
-      <text x={w/2} y={h/2+sigmaSize*0.35} fill={C.white} fontSize={sigmaSize}
-        textAnchor="middle" fontFamily={mathFont}>{"\u03A3"}</text>
-      <text x={w/2} y={h-1} fill={C.muted} fontSize={limSize}
-        textAnchor="middle" fontFamily={mathFont}>{lower}</text>
-    </svg>
-  );
-}
-```
+28. **SVG summation notation** - Use the `Sigma` component from the Integral/Summation section in Component Patterns. Never write a bare Σ character. Same rules as integrals.
 
-29. **Readable but compact diagram sizes** - Every diagram must be readable without squinting, BUT must also fit within the single-viewport constraint (principle 11). Target sweet spot: plot area pW 320-450, pH 180-250. SVG font size: 9-10px. Axis labels: 8-9px. Do NOT make diagrams oversized just because space is available. The goal is clear and legible at a reasonable size, not blown up to fill the screen. For Verify with multiple diagrams, use the smaller end of these ranges so everything fits in one viewport. For Solve split-pane, compact diagrams at pW ~280, pH ~160 are fine as long as text is 9px+. **However, these are starting points, not rigid limits. Diagrams should be sized to fill their container and eliminate dead space.** If a number line sits in a column that's 380px wide and 300px tall, make the number line taller (thicker track, larger labels, more vertical padding for region labels and annotations) so it fills the available space rather than floating as a thin strip with empty space below. Similarly, if a graph sits in a 500px-wide column, size it to fill that width. Use `width="100%"` with a viewBox on SVGs so they scale to their container.
+29. **Readable but compact diagram sizes** - Every diagram must be readable without squinting, BUT must also fit within the single-viewport constraint (principle 11). Minimum readable sizes: plot area pW ~300, pH ~170, SVG font 9px+, axis labels 8px+. These are floors, not targets. Diagrams can and should grow larger to fill their container and eliminate dead space. For Verify with multiple diagrams, use the smaller end so everything fits in one viewport. For Solve split-pane, compact diagrams at pW ~280, pH ~160 are fine as long as text is 9px+.
 
 30. **Multiple complementary diagrams** - When a question involves a substitution or transformation (e.g. letting u = cos^2 theta to reduce to a quadratic), show BOTH perspectives: the original equation's graph AND the substituted variable's graph. In the Verify step, link them interactively: as the student drags theta, highlight the corresponding u value on the quadratic parabola and the f(theta) value on the original curve. This makes the connection between the substitution and the original equation visible. More generally, if there are two natural ways to visualise a problem (e.g. number line and algebraic, or geometric and coordinate), show both rather than picking one.
 
 31. **No elements outside bounds** - Interactive elements (draggable points, sliders, markers, dots) must NEVER visually escape their containing SVG or diagram. Clamp all positions to stay within the plot area. For number lines, the indicator dot must stay within the line endpoints. For circle/geometry diagrams, labels and points must stay within the viewBox. Test boundary values mentally: what happens at the min and max of every slider? If an element would go off-screen, clamp it.
 
-32. **Dense, balanced layouts with no dead space** - Every card and panel must be packed efficiently. No large empty dark areas anywhere. The layout should be fluid and content-driven: choose the arrangement that best fills the available space for each specific question. Use `alignItems: "flex-start"` on any flex row with side-by-side panels.
+32. **Verify layout is flexible, dense, and fits one viewport** - Choose whatever layout best fills the space for each question. The only hard constraints are: fits in ~900px height (principle 11), maxWidth 820px, no large empty dark areas, and `alignItems: "flex-start"` on any flex row with side-by-side panels. Size diagrams to fill their containers using `width="100%"` with a `viewBox` rather than fixed pixel widths.
 
-GOOD example (Q4 sectors verify): Two sector diagrams side by side in one row. Status cards (θ, area diff, perim diff, arc) in a tight 4-column grid row below. Perimeter formulas in a 2-column row below that. Fluid multi-row layout, every row packed, no dead zones.
+GOOD example (Q4 sectors verify): Two sector diagrams side by side, status cards in a tight 4-column grid row below, perimeter formulas in a 2-column row below that. Fluid multi-row layout, every row packed.
 
-GOOD example (Q3 integral verify): Graph with shaded area in one column, status cards stacked in the other column, matching heights through content. Two-column layout works well here because there's one diagram and several status values.
+GOOD example (Q3 integral verify): Graph in one column, status cards stacked in the other column matching the graph height through content.
 
-BAD example: A single diagram in a full-width card that only fills 60% of the width, with 40% dead space beside it. Fix: either size the diagram to fill the width, or put supporting content beside it.
+BAD example: A graph in a full-width card that only fills 60% of the width with dead space beside it. Or a small number line stretched to match a taller neighbour with 300px of empty padding.
 
-BAD example: Two side-by-side panels with `alignItems: "stretch"` where one is much shorter, stretching to match the taller one with empty padding. Fix: use `alignItems: "flex-start"` and fill the shorter column with additional content.
+33. **Show formulas being applied, not just results** - In Solve steps and Verify status cards, show the formula and the substitution, not just the final number. E.g. for a sector perimeter, show "Perimeter = 2r + arc = 2(9) + 6 = 24" not just "24". For area difference, show "Area = (1/2)r^2 theta" then the subtraction. The student needs to see WHERE the number comes from. In Verify, status cards can show the formula label (e.g. "2r + arc") and the computed value. This is a tutoring product: the working is the point.
 
-33. **Verify layout is flexible, not templated** - The Verify step does NOT have to follow one fixed layout, but MUST fit in one viewport (principle 11). Choose the arrangement that best serves the content at a readable-but-compact size. All content fills the same container width (~820px). Good patterns: side-by-side diagrams (each ~380px wide) with controls below; one diagram with controls/status cards beside it filling the same height; two compact diagrams stacked with minimal gap. Bad patterns: two panels forced to equal height with one mostly empty; tiny side-by-side panels; oversized single diagram pushing controls off-screen. The Verify Design Principles table specifies WHAT to build, not HOW to lay it out.
-
-34. **Show formulas being applied, not just results** - In Solve steps and Verify status cards, show the formula and the substitution, not just the final number. E.g. for a sector perimeter, show "Perimeter = 2r + arc = 2(9) + 6 = 24" not just "24". For area difference, show "Area = (1/2)r^2 theta" then the subtraction. The student needs to see WHERE the number comes from. In Verify, status cards can show the formula label (e.g. "2r + arc") and the computed value. This is a tutoring product: the working is the point.
-
-35. **Use shared labels to show relationships visually** - When the question states a relationship between objects (similar, congruent, equal angles, parallel), make it visually obvious through shared labels and annotations. E.g. if two sectors are similar, label BOTH with the same angle theta to show they share it. If two triangles share a side, label it with the same variable on both. If gradients are perpendicular, annotate both with their gradient values. The diagram should communicate the relationship at a glance without the student needing to read the text.
+34. **Use shared labels to show relationships visually** - When the question states a relationship between objects (similar, congruent, equal angles, parallel), make it visually obvious through shared labels and annotations. E.g. if two sectors are similar, label BOTH with the same angle theta to show they share it. If two triangles share a side, label it with the same variable on both. If gradients are perpendicular, annotate both with their gradient values. The diagram should communicate the relationship at a glance without the student needing to read the text.
 
 ---
 
@@ -433,25 +351,24 @@ function SolveStep() {
 }
 ```
 
-### Verify Layout (dashboard pattern)
-The verify step must fit in one viewport (~900px). Arrange as a dense dashboard.
+### Verify Step Components
+The verify step must fit in one viewport (~900px) without scrolling. Pack the components below into whatever spatial arrangement best eliminates dead space for the specific question. You choose the layout (side-by-side columns, fluid rows, grid, etc.) — the only constraints are: no blackspace, everything visible without scrolling, and every component below must appear.
 
-**MANDATORY: Define an isCorrect helper at the top of the verify component. Use EXACTLY 0.01 tolerance. The success banner ONLY shows when isCorrect is true.**
+**MANDATORY: TOL and correctness checks at the top of the verify component.**
 ```jsx
 function VerifyExplorer() {
   const [param, setParam] = useState(defaultValue);
   
-  // MANDATORY: strict threshold for ALL correctness checks
   const TOL = 0.01;
   const check1 = Math.abs(computedValue1 - target1) < TOL;
   const check2 = Math.abs(computedValue2 - target2) < TOL;
-  const allCorrect = check1 && check2; // ALL conditions must pass
-  // Use allCorrect for: success banner, green borders on status cards, "conditions satisfied" text
-  // Use individual checks (check1, check2) for per-card green ticks
+  const allCorrect = check1 && check2;
+  // Use allCorrect for: success banner, green borders on status cards
+  // Use individual checks (check1, check2) for per-card highlights
   // NEVER use a different tolerance anywhere else in this component
 ```
 
-**Controls card: slider + preset buttons**
+**Component 1: Controls card (slider + preset buttons).** Always appears at the top.
 ```jsx
 <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 20px", marginBottom: 14 }}>
   <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 10 }}>
@@ -459,34 +376,33 @@ function VerifyExplorer() {
     <span style={{ minWidth: 80, fontSize: 16, fontWeight: 700, color: C.curve1, fontFamily: mathFont }}>label = value</span>
   </div>
   <div style={{ display: "flex", gap: 6 }}>
-    {/* Preset buttons — use TOL for active state too */}
     <button style={{ flex: 1, padding: "8px 4px", borderRadius: 8, border: `1px solid ${Math.abs(param - presetVal) < TOL ? C.ok : C.border}`, background: Math.abs(param - presetVal) < TOL ? C.ok + "15" : C.card, color: Math.abs(param - presetVal) < TOL ? C.ok : C.muted, fontSize: 11, cursor: "pointer" }}>preset</button>
   </div>
 </div>
+```
 
-{/* Main diagram - full width */}
-<div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px 16px", marginBottom: 14 }}>
-  <MyDiagram compact={false} />
+**Component 2: Diagram(s).** Graph, SVG, number line, circle preview, etc. Use the styling from the C object and mathFont. No specific layout prescribed - place wherever best fills the space.
+
+**Component 3: Status cards.** Use `check1`, `check2` etc. for individual card borders.
+```jsx
+<div style={{ background: C.card, border: `1px solid ${check1 ? C.ok + "66" : C.border}`, borderRadius: 12, padding: "12px 14px", textAlign: "center" }}>
+  <div style={{ fontSize: 10, color: C.muted, fontWeight: 700, marginBottom: 4, textTransform: "uppercase" }}>Label</div>
+  <div style={{ fontSize: 20, fontWeight: 700, color: check1 ? C.ok : C.white, fontFamily: mathFont }}>value</div>
+  {check1 && <div style={{ fontSize: 10, color: C.ok }}>Target: X {"\u2713"}</div>}
 </div>
+```
 
-{/* Status cards row — use check1, check2 for individual card borders */}
-<div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 14 }}>
-  <div style={{ background: C.card, border: `1px solid ${check1 ? C.ok + "66" : C.border}`, borderRadius: 12, padding: "12px 14px", textAlign: "center" }}>
-    <div style={{ fontSize: 10, color: C.muted, fontWeight: 700, marginBottom: 4, textTransform: "uppercase" }}>Label</div>
-    <div style={{ fontSize: 20, fontWeight: 700, color: check1 ? C.ok : C.white, fontFamily: mathFont }}>value</div>
-    {check1 && <div style={{ fontSize: 10, color: C.ok }}>Target: X {"\u2713"}</div>}
-  </div>
-  {/* more status cards using their respective check variables */}
-</div>
-
-{/* Success banner — ONLY when allCorrect is true */}
+**Component 4: Success banner.** ONLY renders when `allCorrect` is true.
+```jsx
 {allCorrect && (
-  <div style={{ background: C.conclBg, border: `1px solid ${C.ok}44`, borderRadius: 12, padding: "12px 16px", textAlign: "center", marginBottom: 14 }}>
+  <div style={{ background: C.conclBg, border: `1px solid ${C.ok}44`, borderRadius: 12, padding: "12px 16px", textAlign: "center" }}>
     <span style={{ fontSize: 14, fontWeight: 700, color: C.ok }}>All conditions satisfied!</span>
   </div>
 )}
+```
 
-{/* HINT box */}
+**Component 5: Hint box.** Always appears at the bottom.
+```jsx
 <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "12px 18px" }}>
   <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
     <span style={{ background: C.assumBg, border: `1px solid ${C.assum}`, borderRadius: 6, padding: "4px 10px", fontSize: 12, color: C.assum, fontWeight: 700, whiteSpace: "nowrap" }}>HINT</span>
@@ -494,6 +410,12 @@ function VerifyExplorer() {
   </div>
 </div>
 ```
+
+**Arrangement rules:**
+- Controls card always first, hint box always last
+- Components 2, 3, and 4 go in between — arrange them however best fills the space with no dead areas
+- All content must stay within maxWidth 820px
+- Use `alignItems: "flex-start"` on any flex row with side-by-side panels
 
 ### OptionCard
 ```jsx
@@ -615,27 +537,3 @@ Match the verify format to the question type:
 **Key principle**: The verify should let the student do what they would do in the exam, just with computational assistance. If the exam technique is "try a few values", the verify should let them try values. If it's "sketch and shade", the verify should build up that sketch.
 
 ---
-
-## What's Next
-
-### Remaining questions (prioritised):
-- **2022 Paper 1**: Q1-Q5, Q7, Q9 (7 questions)
-- **2022 Paper 2**: Q1, Q3-Q7, Q10, Q12, Q13, Q15, Q19 (11 questions)
-- **2023 Paper 2**: Q1-Q5, Q7, Q9, Q13-Q16, Q18-Q19 (12 questions)
-- **2023 Paper 1**: Full paper not yet started
-- **Other years**: System scales to any TMUA paper/year
-
-### Automation considerations:
-- The 5-step pattern is highly consistent - could template the outer shell (nav, step buttons, option cards)
-- The solve step reveal pattern is reusable
-- Diagram components are becoming reusable (NumberLine, IntersectionGraph, PolygonDiagram, StepGraph, KiteDiagram, TriangleDiagram, LineGraph)
-- The arrow-notation logic checker pattern is reusable for all Paper 2 "must be true" / "only if" / "sufficient" questions
-- The SVG Sigma / integral notation components are reusable
-- Main variation is in the specific diagram/verify component per question
-
-### Design improvements for future:
-- Single-viewport verify layouts (compact side-by-side instead of stacked scrolling)
-- Collapsible sections in verify for complex questions
-- Consistent "exam sketch" visual language in solve steps
-- Consider a shared component library imported across questions
-- Product notation (Pi symbol) using same SVG pattern as Sum/Integral
