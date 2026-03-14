@@ -109,9 +109,9 @@ const C = {
   3. If the main visual is wide enough to fill ~820px, place it full-width and put supporting content below
   4. If the main visual only fills ~400-500px, place it in one column and stack the supporting content in the other column beside it
   5. Use `alignItems: "flex-start"` on the row and `flexDirection: "column"` with `gap: 12` on each column
-  6. Both columns should end up roughly the same height through content
+  6. Both columns should end up roughly the same height. If one column has too much content, move a card to the other column or place it in a full-width row below both columns. The goal is symmetry: both columns should finish at approximately the same vertical position.
 
-  The anti-pattern is a graph floating in a full-width card with 300px of dead space beside it, and status cards in a separate row below. The good pattern is the graph in the left column with status cards stacked in the right column beside it, filling the same vertical space.
+  The anti-pattern is a graph floating in a full-width card with 300px of dead space beside it, and status cards in a separate row below. The good pattern is the graph in the left column with status cards stacked in the right column beside it, both ending at the same height.
 
 ---
 
