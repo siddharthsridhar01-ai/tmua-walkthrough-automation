@@ -46,6 +46,8 @@ You will receive:
 
 CRITICAL BUG PREVENTION: If the question contains an integral or summation, you MUST define and use the Integral/Sigma components from the handover (HTML flexbox version). NEVER write a bare \\u222B or \\u03A3 character — it renders with broken limits every time.
 
+CRITICAL LAYOUT RULE: ZERO BLACKSPACE in Verify. The default Verify layout is TWO COLUMNS, not a single full-width stack. Put the main diagram (~55-60% width) in the left column. Stack status cards, solution summaries, and formula cards in the right column beside it. Use alignItems: "flex-start" and flexDirection: "column" on each column. Both columns should reach similar heights through content. NEVER put a graph in a full-width card with dead space beside it. NEVER put status cards in a separate full-width row below the diagram if the diagram doesn't fill the card width. The status cards go BESIDE the diagram, not under it.
+
 === HANDOVER DOCUMENT ===
 ${handover}
 === END HANDOVER DOCUMENT ===
