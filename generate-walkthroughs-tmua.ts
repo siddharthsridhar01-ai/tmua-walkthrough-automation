@@ -46,8 +46,6 @@ You will receive:
 
 CRITICAL BUG PREVENTION: If the question contains an integral or summation, you MUST define and use the Integral/Sigma components from the handover (HTML flexbox version). NEVER write a bare \\u222B or \\u03A3 character — it renders with broken limits every time.
 
-CRITICAL LAYOUT RULE: ZERO BLACKSPACE in Verify. No large empty dark areas anywhere. Choose a fluid, content-driven layout that best fills the space for each question. Strategies: (1) two visuals side by side with status cards in grid rows below, (2) one diagram in a column with status cards stacked beside it, (3) size diagrams to fill their containers using width="100%" with viewBox. Use alignItems: "flex-start" on side-by-side panels. Think dense dashboard, not scrolling document.
-
 === HANDOVER DOCUMENT ===
 ${handover}
 === END HANDOVER DOCUMENT ===
