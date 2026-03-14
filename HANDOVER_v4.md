@@ -95,7 +95,23 @@ const C = {
 - **NEVER** use `{"\uXXXX"}` inside a JS string literal - this breaks the string
 - **NO bold/strong on variables** in question text. Do not wrap x, y, p, n, etc. in `<strong>` or `<b>`. Variables should be in math font at normal weight, not bold. Bold is only for structural labels like "CORRECT:" or badge text, never for mathematical content.
 - **Consistent styling across ALL questions.** Question text is always fontSize 15.5, lineHeight 2, color C.text. Option cards always use the exact OptionCard pattern from Component Patterns. QuestionSummary always uses fontSize 13 with all options on one row. The header, step nav, step title, and navigation buttons are identical every time — use the App Shell pattern exactly. Do not improvise new styles per question.
-- **ZERO blackspace.** Every card and panel must be filled with content. If a diagram is short, the card should be short — do not pad it to match a taller neighbour. If two panels are side by side and one is shorter, put status cards or additional info in the remaining space. Large empty dark areas inside cards look unprofessional. The anti-pattern is a small number line floating in a tall card with 300px of dead space below it. The good pattern is a graph that fills its card with status cards packed beside or below it.
+- **ZERO blackspace.** Every card and panel must be filled with content. Large empty dark areas inside cards look unprofessional. There are two common failure modes:
+
+  **Failure mode 1: Diagram doesn't fill the card width.** A graph or SVG sits in a full-width card but only occupies 60% of the horizontal space, leaving dead space on the right. **Fix: use a two-column layout. Put the diagram in the left column and stack status cards, solution summaries, or formula breakdowns in the right column beside it.**
+
+  **Failure mode 2: Mismatched-height side-by-side panels.** Two panels sit side by side but one is much taller, and the shorter one stretches or leaves dead space below. **Fix: wrap in a two-column flex row with `alignItems: "flex-start"`. Put additional content (status cards, formula cards) in the same column as the shorter panel, stacked below it, so both columns reach roughly the same height through content, not padding.**
+
+  **Strategy 3: Flex diagram dimensions to fill available space.** Don't treat diagram sizes as fixed. If a number line sits in a column with vertical space to spare, make it taller: thicker track, larger labels, more vertical room for region annotations, sign labels, and the current-value indicator. If a graph sits in a wide column, size it to fill the width using `width="100%"` with a viewBox. Diagrams should expand to fill their container, not float at a fixed size with empty space around them.
+
+  **Layout algorithm for the Verify step:**
+  1. Identify the main visual (graph, diagram, circle preview, number line)
+  2. Identify the supporting content (status cards, solutions found, formula cards)
+  3. If the main visual is wide enough to fill ~820px, place it full-width and put supporting content below
+  4. If the main visual only fills ~400-500px, place it in one column and stack the supporting content in the other column beside it
+  5. Use `alignItems: "flex-start"` on the row and `flexDirection: "column"` with `gap: 12` on each column
+  6. Both columns should end up roughly the same height through content
+
+  The anti-pattern is a graph floating in a full-width card with 300px of dead space beside it, and status cards in a separate row below. The good pattern is the graph in the left column with status cards stacked in the right column beside it, filling the same vertical space.
 
 ---
 
@@ -257,19 +273,21 @@ function Sigma({ lower, upper, size }) {
 }
 ```
 
-29. **Readable but compact diagram sizes** - Every diagram must be readable without squinting, BUT must also fit within the single-viewport constraint (principle 11). Target sweet spot: plot area pW 320-450, pH 180-250. SVG font size: 9-10px. Axis labels: 8-9px. Do NOT make diagrams oversized just because space is available. The goal is clear and legible at a reasonable size, not blown up to fill the screen. For Verify with multiple diagrams, use the smaller end of these ranges so everything fits in one viewport. For Solve split-pane, compact diagrams at pW ~280, pH ~160 are fine as long as text is 9px+.
+29. **Readable but compact diagram sizes** - Every diagram must be readable without squinting, BUT must also fit within the single-viewport constraint (principle 11). Target sweet spot: plot area pW 320-450, pH 180-250. SVG font size: 9-10px. Axis labels: 8-9px. Do NOT make diagrams oversized just because space is available. The goal is clear and legible at a reasonable size, not blown up to fill the screen. For Verify with multiple diagrams, use the smaller end of these ranges so everything fits in one viewport. For Solve split-pane, compact diagrams at pW ~280, pH ~160 are fine as long as text is 9px+. **However, these are starting points, not rigid limits. Diagrams should be sized to fill their container and eliminate dead space.** If a number line sits in a column that's 380px wide and 300px tall, make the number line taller (thicker track, larger labels, more vertical padding for region labels and annotations) so it fills the available space rather than floating as a thin strip with empty space below. Similarly, if a graph sits in a 500px-wide column, size it to fill that width. Use `width="100%"` with a viewBox on SVGs so they scale to their container.
 
 30. **Multiple complementary diagrams** - When a question involves a substitution or transformation (e.g. letting u = cos^2 theta to reduce to a quadratic), show BOTH perspectives: the original equation's graph AND the substituted variable's graph. In the Verify step, link them interactively: as the student drags theta, highlight the corresponding u value on the quadratic parabola and the f(theta) value on the original curve. This makes the connection between the substitution and the original equation visible. More generally, if there are two natural ways to visualise a problem (e.g. number line and algebraic, or geometric and coordinate), show both rather than picking one.
 
 31. **No elements outside bounds** - Interactive elements (draggable points, sliders, markers, dots) must NEVER visually escape their containing SVG or diagram. Clamp all positions to stay within the plot area. For number lines, the indicator dot must stay within the line endpoints. For circle/geometry diagrams, labels and points must stay within the viewBox. Test boundary values mentally: what happens at the min and max of every slider? If an element would go off-screen, clamp it.
 
-32. **Dense, balanced layouts with no dead space** - Every card and panel must be packed efficiently. No large empty dark areas anywhere. Cards should shrink-wrap their content, not stretch to fill arbitrary heights.
+32. **Dense, balanced layouts with no dead space** - Every card and panel must be packed efficiently. No large empty dark areas anywhere. **The default Verify layout should be two columns, not a single full-width stack.** Put the main diagram in one column (~55-60% width) and stack status cards, solutions, and formula breakdowns in the other column (~40-45% width). Use `alignItems: "flex-start"` on the flex row so each column shrink-wraps. Build both columns to similar heights through content.
 
-GOOD example (Q4 sectors verify): Two sector diagrams side by side, each filling its card. Status cards (area diff, small perim, large perim, perim diff) in a tight 4-column row below. Slider and presets above. Everything fills its space, no dead zones.
+GOOD example (Q3 integral verify): Graph with shaded area in the left column. Status cards (f(0), f(1), integral value) and "all conditions met" banner stacked in the right column, matching the graph height through content. Dense, balanced, professional.
 
-GOOD example (Q3 integral verify): Graph with shaded area on the left filling its panel. Status cards (f(0), f(1), integral value) stacked on the right, matching the graph height. Dense, balanced, professional.
+GOOD example (Q1 trig verify): Trig curve graph in the left column. Status cards (cos θ, cos²θ, f(θ), solution?) and "solutions found" panel stacked in the right column beside the graph. No dead space.
 
-BAD example: A small number line (100px tall) inside a card that's 400px tall because it's side-by-side with a tall circle diagram. The 300px of empty dark space below the number line looks terrible. Fix: either make the number line card shorter (don't force equal heights), or fill the space below the number line with status cards.
+BAD example: A graph in a full-width card with dead space on the right side, status cards in a separate full-width 4-column row below, and a solutions panel below that. All that content should be beside the graph, not under it.
+
+BAD example: A number line and circle diagram side by side with `alignItems: "stretch"`, the number line card stretching to match the taller circle. Fix: use `alignItems: "flex-start"`, put status cards below the number line in the same column.
 
 33. **Verify layout is flexible, not templated** - The Verify step does NOT have to follow one fixed layout, but MUST fit in one viewport (principle 11). Choose the arrangement that best serves the content at a readable-but-compact size. All content fills the same container width (~820px). Good patterns: side-by-side diagrams (each ~380px wide) with controls below; one diagram with controls/status cards beside it filling the same height; two compact diagrams stacked with minimal gap. Bad patterns: two panels forced to equal height with one mostly empty; tiny side-by-side panels; oversized single diagram pushing controls off-screen. The Verify Design Principles table specifies WHAT to build, not HOW to lay it out.
 
